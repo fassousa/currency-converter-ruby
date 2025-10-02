@@ -15,11 +15,29 @@ module Api
       end
 
       # POST /api/v1/transactions
-      # Will be implemented in Phase 3 with currency conversion service
+      # Creates a new currency conversion transaction
+      # Params: from_currency, to_currency, from_value
       def create
-        render json: { 
-          message: 'Transaction creation will be implemented in Phase 3' 
-        }, status: :not_implemented
+        service = Transactions::Create.new(user: current_user)
+        
+        transaction = service.call(
+          from_currency: params[:from_currency],
+          to_currency: params[:to_currency],
+          from_value: params[:from_value]
+        )
+
+        if transaction
+          render json: {
+            transaction: transaction.as_json(
+              only: [:id, :from_currency, :to_currency, :from_value, :to_value, :rate, :timestamp]
+            ),
+            message: 'Transaction created successfully'
+          }, status: :created
+        else
+          render json: {
+            errors: service.errors
+          }, status: :unprocessable_entity
+        end
       end
     end
   end
