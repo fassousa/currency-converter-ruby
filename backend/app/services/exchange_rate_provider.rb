@@ -2,7 +2,7 @@
 
 # Service class for fetching exchange rates from CurrencyAPI
 # Implements retry logic, timeout handling, and error management
-class ExchangeRateProvider
+class ExchangeRateProvider # rubocop:disable Metrics/ClassLength
   BASE_URL = 'https://api.currencyapi.com/v3'
   TIMEOUT_SECONDS = 10
   MAX_RETRIES = 3

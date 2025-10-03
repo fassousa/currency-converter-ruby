@@ -6,7 +6,8 @@ module Api
       extend ActiveSupport::Concern
 
       included do
-        #  Catch-all for unexpected errors (except in development) - must be first so more specific handlers take precedence
+        # Catch-all for unexpected errors (except in development)
+        # Must be first so more specific handlers take precedence
         rescue_from StandardError, with: :render_internal_error unless Rails.env.development?
 
         # ActiveRecord errors

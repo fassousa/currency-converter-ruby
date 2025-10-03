@@ -3,7 +3,7 @@
 # Service for logging external API calls
 class ApiCallLogger
   class << self
-    def log_request(service:, endpoint:, params: {}, headers: {})
+    def log_request(service:, endpoint:, params: {}, _headers: {})
       Rails.logger.info({
         event: 'external_api_request',
         service: service,
@@ -13,7 +13,7 @@ class ApiCallLogger
       }.to_json)
     end
 
-    def log_response(service:, endpoint:, status:, duration_ms:, success:, error: nil)
+    def log_response(service:, endpoint:, status:, duration_ms:, success:, error: nil) # rubocop:disable Metrics/ParameterLists
       level = success ? :info : :error
 
       Rails.logger.public_send(level, {

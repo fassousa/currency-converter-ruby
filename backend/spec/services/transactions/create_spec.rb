@@ -48,14 +48,17 @@ RSpec.describe Transactions::Create, type: :service do
       end
 
       it 'fetches the exchange rate from the provider' do
-        expect(exchange_rate_provider).to receive(:fetch_rate)
+        allow(exchange_rate_provider).to receive(:fetch_rate)
           .with(from: 'USD', to: 'EUR')
           .and_return(BigDecimal('0.85'))
 
         service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+
+        expect(exchange_rate_provider).to have_received(:fetch_rate)
+          .with(from: 'USD', to: 'EUR')
       end
 
-      it 'returns the created transaction' do
+      it 'persists the transaction correctly' do
         transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
         expect(transaction).to be_a(Transaction)
         expect(transaction.persisted?).to be true

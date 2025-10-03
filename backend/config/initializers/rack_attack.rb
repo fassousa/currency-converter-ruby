@@ -25,7 +25,7 @@ module Rack
           # Return the email if present in POST data
           user_params = req.params['user']
           email = user_params&.dig('email')
-          email&.to_s&.downcase&.presence
+          email&.to_s&.downcase
         end
       end
     end

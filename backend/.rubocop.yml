@@ -30,7 +30,7 @@ AllCops:
     - 'config.ru'
     - 'Rakefile'
 
-# Disable buggy RSpec/FactoryBot/Capybara cops
+# Disable buggy cops - using full department paths to avoid ambiguity
 Capybara/RSpec/PredicateMatcher:
   Enabled: false
 
@@ -103,6 +103,9 @@ RSpec/MultipleMemoizedHelpers:
 
 RSpec/LetSetup:
   Enabled: false
+
+RSpec/NestedGroups:
+  Max: 4
 
 RSpec/DescribeClass:
   Exclude:
