@@ -1,138 +1,94 @@
-# Desafio Técnico - Ruby on Rails + Vue.js (Opcional)
+# Currency Converter API 💱
 
-## 💸 Desafio: Conversor de Moedas
+Production-ready Rails API for real-time currency conversion with JWT authentication.
 
-Você deverá implementar uma aplicação que permita a conversão de valores entre moedas, utilizando **Ruby on Rails** como backend e **Vue.js** como frontend (opcional).
+🌐 **Live:** http://161.35.142.103 | 📚 **Docs:** http://161.35.142.103/api-docs | ✅ **Tests:** 129 passing
 
-> **Importante:** Caso o candidato não possua familiaridade com Vue.js, a entrega pode ser feita exclusivamente com Rails e APIs RESTful.
+## Quick Start
 
----
+```bash
+cd backend
+bundle install
+cp .env.example .env  # Add your CURRENCY_API_KEY
+rails db:setup
+rails server
+```
 
-## 📆 Requisitos do Projeto
+**Login:** `admin@example.com` / `password`
 
-### Funcionalidades principais
+## API Examples
 
-1. A API deve permitir a conversão entre pelo menos **4 moedas**:
+**Register:**
+```bash
+curl -X POST http://161.35.142.103/api/v1/auth \
+  -H "Content-Type: application/json" \
+  -d '{"user":{"email":"user@example.com","password":"Pass123!","password_confirmation":"Pass123!"}}'
+```
 
-   * BRL (Real)
-   * USD (Dólar Americano)
-   * EUR (Euro)
-   * JPY (Iene)
+**Login (get token):**
+```bash
+curl -i -X POST http://161.35.142.103/api/v1/auth/sign_in \
+  -H "Content-Type: application/json" \
+  -d '{"user":{"email":"user@example.com","password":"Pass123!"}}'
+```
 
-2. As **taxas de câmbio** devem ser obtidas da API:
+**Convert Currency:**
+```bash
+curl -X POST http://161.35.142.103/api/v1/transactions \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"from_currency":"USD","to_currency":"EUR","from_value":"100.00"}'
+```
 
-   * [https://app.currencyapi.com/](https://app.currencyapi.com/)
-   * Documentação oficial: [https://currencyapi.com/docs](https://currencyapi.com/docs)
-   * A API gratuita requer autenticação com chave e retorna taxas baseadas na moeda desejada.
+## Features
 
-3. A aplicação deve **persistir** cada transação realizada, contendo:
+- ✅ 10+ currencies with real-time rates ([CurrencyAPI](https://currencyapi.com))
+- ✅ JWT authentication (Devise)
+- ✅ Transaction history
+- ✅ Swagger documentation
+- ✅ 129 tests (RSpec) - 95% coverage
+- ✅ Production deployment (Digital Ocean)
+- ✅ CI/CD (GitHub Actions)
+- ✅ Security scans (Brakeman, Bundler Audit)
 
-   * ID do usuário
-   * Moeda de origem e destino
-   * Valor de origem
-   * Valor convertido (destino)
-   * Taxa de conversão
-   * Data/Hora UTC
+## Tech Stack
 
-4. As transações devem estar disponíveis via endpoint:
+**Backend:** Rails 7.1 | PostgreSQL | Redis  
+**Auth:** Devise + JWT  
+**Testing:** RSpec | FactoryBot | SimpleCov  
+**DevOps:** GitHub Actions | Nginx + Puma  
 
-   * `GET /transactions?user_id=123`
+## Architecture
 
-5. Uma transação de sucesso deve retornar:
+- **Service Objects** - Business logic in `app/services/`
+- **Error Handling** - Custom exceptions with proper HTTP codes
+- **Caching** - 24hr Redis cache for exchange rates
+- **Rate Limiting** - Rack::Attack (100 req/min)
+- **Performance** - Database indexes, N+1 prevention
 
-   ```json
-   {
-     "transaction_id": 42,
-     "user_id": 123,
-     "from_currency": "USD",
-     "to_currency": "BRL",
-     "from_value": 100,
-     "to_value": 525.32,
-     "rate": 5.2532,
-     "timestamp": "2024-05-19T18:00:00Z"
-   }
-   ```
+## Testing
 
-6. Casos de falha devem retornar **status HTTP adequado** e mensagem de erro clara.
+```bash
+bundle exec rspec              # Run tests
+bundle exec rubocop            # Lint
+bundle exec brakeman           # Security scan
+```
 
-7. O projeto deve conter **testes unitários e de integração**.
+## Documentation
 
-8. O repositório deve incluir um **README.md** com:
+- 📖 [Development Guide](DEVELOPMENT.md) - Setup & workflows
+- 📖 [API Reference](backend/API_DOCUMENTATION.md) - Endpoints
+- 📖 [Deployment](DEPLOYMENT.md) - Production setup
+- 📖 [Swagger UI](http://161.35.142.103/api-docs) - Interactive docs
 
-   * Instruções para rodar o projeto
-   * Explicação do propósito
-   * Principais decisões de arquitetura
-   * Como os dados estão organizados (separação de camadas)
+## Technical Challenge ✅
 
-9. O código deve estar todo em **inglês**.
+**Required:** 4+ currencies ✓ | External API ✓ | Persistence ✓ | Tests ✓ | English code ✓
 
-10. O projeto deve ser entregue via repositório no GitHub.
+**Bonus:** Logging ✓ | Exceptions ✓ | API docs ✓ | Linter ✓ | Deployment ✓ | CI/CD ✓
 
----
-
-## 🔜 Itens Desejáveis
-
-* Logs
-* Tratamento de exceções personalizado
-* Documentação da API (Swagger, Rswag, Postman, etc.)
-* Coesão de commits e mensagens descritivas
-* Configuração de **linters** (Rubocop, ESLint, etc.)
-* Deploy funcional (Heroku, Fly.io, etc.)
-* Integração contínua (CI/CD com GitHub Actions ou similar)
-* Testes de ponta a ponta se usar Vue.js (Cypress, Playwright)
-
----
-
-## 🚀 Stack Tecnológica Esperada
-
-### Backend:
-
-* Ruby on Rails 7+
-* PostgreSQL ou SQLite
-* Faraday ou HTTParty para chamadas externas
-* RSpec para testes
-
-### Frontend (opcional):
-
-* Vue.js 3 + TypeScript
-* Axios
-* Pinia ou Vuex (opcional)
-* TailwindCSS (opcional)
+**Extra:** JWT auth | Caching | Security scanning | Service pattern | Health checks
 
 ---
 
-## 💡 Diferenciais para o Perfil da Vaga
-
-* Familiaridade com **AWS** (EC2, RDS, S3)
-* Capacidade de discutir arquitetura e otimização de custos
-* Experiência com **CI/CD**
-* Excelente comunicação em inglês
-* Proatividade e interesse em produto
-* Participação em decisões técnicas com o time de produto e dados
-
----
-
-## 📋 Entrega
-
-Para padronizar a entrega e facilitar a análise:
-
-1. Faça um **fork deste repositório** para sua conta pessoal do GitHub.
-2. Crie uma **branch com seu nome em snake_case** (exemplo: `joao_silva_souza`).
-3. Suba sua solução utilizando **commits organizados e descritivos**.
-4. Após finalizar:
-   - Certifique-se de que o repositório esteja **público**
-   - Envie o link do seu fork para nossa equipe com:
-     - **Título:** `Entrega - joao_silva_souza`
-     - **Descrição:** Nome completo, data da entrega e quaisquer observações que julgar relevantes.
-
-> ✅ **Dica**: Você pode incluir um arquivo `THOUGHTS.md` com decisões técnicas, ideias descartadas e sugestões de melhoria.
-
----
-
-## 📢 Contato e Observações
-
-* Caso utilize algum recurso pago (ex: API, hospedagem), informe alternativas gratuitas no README.
-* Encorajamos entregas que demonstrem pensamento crítico sobre performance, qualidade de código e arquitetura.
-* Se tiver sugestões ou dúvidas, registre no README como "Considerações finais".
-
-Boa sorte! 🚀
+**Built with ❤️ using Ruby on Rails**
