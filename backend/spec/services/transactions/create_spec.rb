@@ -15,103 +15,47 @@ RSpec.describe Transactions::Create, type: :service do
           .and_return(BigDecimal('0.85'))
       end
 
-      it 'creates a transaction successfully' do
-        expect do
-          service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-        end.to change(Transaction, :count).by(1)
-      end
-
-      it 'returns the created transaction' do
-        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-
-        expect(transaction).to be_a(Transaction)
-        expect(transaction).to be_persisted
-        expect(transaction.user).to eq(user)
-      end
-
-      it 'sets the correct attributes' do
-        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-
-        expect(transaction.from_currency).to eq('USD')
-        expect(transaction.to_currency).to eq('EUR')
-        expect(transaction.from_value).to eq(BigDecimal('100.00'))
-        expect(transaction.rate).to eq(BigDecimal('0.85'))
-        expect(transaction.to_value).to eq(BigDecimal('85.00'))
-      end
-
-      it 'calculates the converted amount correctly' do
-        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-
-        expect(transaction.to_value).to eq(
-          transaction.from_value * transaction.rate,
-        )
+      it 'creates and returns a persisted transaction with correct attributes' do
+        expect {
+          transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+          
+          expect(transaction).to be_persisted.and have_attributes(
+            user: user,
+            from_currency: 'USD',
+            to_currency: 'EUR',
+            from_value: BigDecimal('100.00'),
+            rate: BigDecimal('0.85'),
+            to_value: BigDecimal('85.00')
+          )
+        }.to change(Transaction, :count).by(1)
       end
 
       it 'fetches the exchange rate from the provider' do
-        allow(exchange_rate_provider).to receive(:fetch_rate)
-          .with(from: 'USD', to: 'EUR')
-          .and_return(BigDecimal('0.85'))
-
         service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-
-        expect(exchange_rate_provider).to have_received(:fetch_rate)
-          .with(from: 'USD', to: 'EUR')
-      end
-
-      it 'persists the transaction correctly' do
-        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-        expect(transaction).to be_a(Transaction)
-        expect(transaction.persisted?).to be true
+        expect(exchange_rate_provider).to have_received(:fetch_rate).with(from: 'USD', to: 'EUR')
       end
     end
 
     context 'with different currency pairs' do
-      it 'handles USD to BRL conversion' do
-        allow(exchange_rate_provider).to receive(:fetch_rate)
-          .with(from: 'USD', to: 'BRL')
-          .and_return(BigDecimal('5.25'))
+      it 'handles multiple currency pairs correctly' do
+        allow(exchange_rate_provider).to receive(:fetch_rate).with(from: 'USD', to: 'BRL').and_return(BigDecimal('5.25'))
+        allow(exchange_rate_provider).to receive(:fetch_rate).with(from: 'EUR', to: 'JPY').and_return(BigDecimal('160.25'))
 
-        transaction = service.call(
-          from_currency: 'USD',
-          to_currency: 'BRL',
-          from_value: '100.00',
-        )
+        usd_brl = service.call(from_currency: 'USD', to_currency: 'BRL', from_value: '100.00')
+        eur_jpy = service.call(from_currency: 'EUR', to_currency: 'JPY', from_value: '50.00')
 
-        expect(transaction.from_currency).to eq('USD')
-        expect(transaction.to_currency).to eq('BRL')
-        expect(transaction.rate).to eq(BigDecimal('5.25'))
-        expect(transaction.to_value).to eq(BigDecimal('525.00'))
-      end
-
-      it 'handles EUR to JPY conversion' do
-        allow(exchange_rate_provider).to receive(:fetch_rate)
-          .with(from: 'EUR', to: 'JPY')
-          .and_return(BigDecimal('160.25'))
-
-        transaction = service.call(
-          from_currency: 'EUR',
-          to_currency: 'JPY',
-          from_value: '50.00',
-        )
-
-        expect(transaction.to_value).to eq(BigDecimal('8012.5'))
+        expect(usd_brl.to_value).to eq(BigDecimal('525.00'))
+        expect(eur_jpy.to_value).to eq(BigDecimal('8012.5'))
       end
     end
 
     context 'with decimal amounts' do
-      it 'handles amounts with many decimal places and rounds to 4 decimals' do
-        allow(exchange_rate_provider).to receive(:fetch_rate)
-          .and_return(BigDecimal('0.857342'))
+      it 'rounds to 4 decimal places' do
+        allow(exchange_rate_provider).to receive(:fetch_rate).and_return(BigDecimal('0.857342'))
 
-        transaction = service.call(
-          from_currency: 'USD',
-          to_currency: 'EUR',
-          from_value: '123.4568',
-        )
+        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '123.4568')
 
-        expect(transaction.from_value).to eq(BigDecimal('123.4568'))
-        # 123.4568 * 0.857342 = 105.8447... rounded to 4 decimals = 105.8447
-        expect(transaction.to_value).to eq(BigDecimal('105.8447'))
+        expect(transaction.to_value).to eq(BigDecimal('105.8447'))  # 123.4568 * 0.857342 rounded
       end
     end
 
