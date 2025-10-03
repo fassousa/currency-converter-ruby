@@ -1,0 +1,234 @@
+# RuboCop configuration for Currency Converter API
+# https://docs.rubocop.org/rubocop/configuration.html
+
+plugins:
+  - rubocop-rails
+  - rubocop-performance
+
+require:
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'db/migrate/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'storage/**/*'
+    - 'log/**/*'
+    - 'config/environments/*'
+    - 'config/initializers/devise.rb'
+    - 'config/initializers/filter_parameter_logging.rb'
+    - 'config/puma.rb'
+    - 'config/application.rb'
+    - 'config/boot.rb'
+    - 'config/environment.rb'
+    - 'config.ru'
+    - 'Rakefile'
+
+# ===========================
+# Layout & Style
+# ===========================
+
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns:
+    - '^\s*#.*'  # Allow long comments
+    - '^\s*raise'  # Allow long raise statements with messages
+  Exclude:
+    - 'spec/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: single_quotes
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Style/WordArray:
+  EnforcedStyle: brackets
+
+# Allow multiline blocks with do..end
+Style/BlockDelimiters:
+  EnforcedStyle: semantic
+
+# ===========================
+# Metrics
+# ===========================
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/routes.rb'
+    - 'config/initializers/*'
+
+Metrics/MethodLength:
+  Max: 50  # Increased from 15 for service methods with multiple API interactions
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/AbcSize:
+  Max: 35  # Increased from 20 for complex service methods
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/ClassLength:
+  Max: 200  # Increased from 150 for service classes with extensive logic
+
+Metrics/ParameterLists:
+  Max: 6  # Allow up to 6 parameters for logger methods
+  Exclude:
+    - 'spec/**/*'
+
+# ===========================
+# Rails Specific
+# ===========================
+
+Rails:
+  Enabled: true
+
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+Rails/SkipsModelValidations:
+  Enabled: false
+  
+Rails/UniqueValidationWithoutIndex:
+  Enabled: false
+
+# Allow ActiveRecord callbacks
+Rails/LexicallyScopedActionFilter:
+  Enabled: false
+
+# ===========================
+# RSpec Specific
+# ===========================
+
+RSpec/ExampleLength:
+  Max: 25  # Allow longer examples for integration tests
+  Exclude:
+    - 'spec/integration/**/*'
+
+RSpec/MultipleExpectations:
+  Max: 5
+  Exclude:
+    - 'spec/integration/**/*'
+    - 'spec/requests/**/*'
+
+RSpec/NestedGroups:
+  Max: 5
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/LetSetup:
+  Enabled: false
+
+RSpec/AnyInstance:
+  Enabled: false
+
+RSpec/MessageSpies:
+  EnforcedStyle: receive
+
+# Allow describe_class in top-level describes
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/requests/**/*'
+    - 'spec/integration/**/*'
+
+# ===========================
+# Performance
+# ===========================
+
+Performance/UnfreezeString:
+  Enabled: true
+
+Performance/StringInclude:
+  Enabled: true
+
+# ===========================
+# Naming
+# ===========================
+
+Naming/VariableNumber:
+  Enabled: false
+
+Naming/MemoizedInstanceVariableName:
+  EnforcedStyleForLeadingUnderscores: optional
+
+# ===========================
+# Disabled Cops (Project Specific)
+# ===========================
+
+# Allow using $0, $1 in regex
+Style/PerlBackrefs:
+  Enabled: false
+
+# Allow trailing commas for better diffs
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: consistent_comma
+
+# Allow compact style for hashes
+Style/HashSyntax:
+  EnforcedShorthandSyntax: either
+
+# Prefer modern ruby syntax
+Style/NumericPredicate:
+  Enabled: true
+
+# ===========================
+# Lint
+# ===========================
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+  IgnoreEmptyMethods: true
+
+# ===========================
+# RSpec
+# ===========================
+
+RSpec/ExampleLength:
+  Max: 25  # Allow longer examples for integration tests
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/RepeatedDescription:
+  Enabled: false  # Allow repeated descriptions for different scenarios
+
+RSpec/NoExpectationExample:
+  Enabled: false  # Allow examples without expectations (e.g., testing that no error is raised)
+
+RSpec/StubbedMock:
+  Enabled: false  # Allow expect for mocks when needed
+
+# ===========================
+# Style
+# ===========================
+
+Style/SafeNavigationChainLength:
+  Max: 3  # Allow up to 3 chained safe navigation calls
+
+Lint/MissingSuper:
+  Enabled: false
