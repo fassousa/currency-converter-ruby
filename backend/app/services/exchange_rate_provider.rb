@@ -3,11 +3,6 @@
 # Service class for fetching exchange rates from CurrencyAPI
 # Implements retry logic, timeout handling, and error management
 class ExchangeRateProvider
-  class ApiError < StandardError; end
-  class RateLimitError < ApiError; end
-  class InvalidCurrencyError < ApiError; end
-  class TimeoutError < ApiError; end
-
   BASE_URL = 'https://api.currencyapi.com/v3'
   TIMEOUT_SECONDS = 10
   MAX_RETRIES = 3
@@ -31,7 +26,7 @@ class ExchangeRateProvider
     # Try to fetch from cache first
     cache_key = rate_cache_key(from, to)
     cached_rate = Rails.cache.read(cache_key)
-    
+
     if cached_rate
       ApiCallLogger.log_cache_hit(service: 'CurrencyAPI', cache_key: cache_key)
       return BigDecimal(cached_rate)
@@ -43,18 +38,18 @@ class ExchangeRateProvider
     start_time = Time.current
     response = fetch_latest_rates(base_currency: from, currencies: [to])
     duration_ms = (Time.current - start_time) * 1000
-    
+
     rate = parse_rate(response, from, to)
     Rails.cache.write(cache_key, rate.to_s, expires_in: CACHE_EXPIRATION)
-    
+
     ApiCallLogger.log_response(
       service: 'CurrencyAPI',
       endpoint: '/latest',
       status: 200,
       duration_ms: duration_ms,
-      success: true
+      success: true,
     )
-    
+
     rate
   rescue Faraday::TimeoutError => e
     ApiCallLogger.log_response(
@@ -63,9 +58,12 @@ class ExchangeRateProvider
       status: 0,
       duration_ms: (Time.current - start_time) * 1000,
       success: false,
-      error: e
+      error: e,
     )
-    raise TimeoutError, "CurrencyAPI timeout: #{e.message}"
+    raise ExchangeRateUnavailableError.new(
+      message: "Currency exchange service timeout: #{e.message}",
+      details: { from: from, to: to, timeout: TIMEOUT_SECONDS },
+    )
   rescue Faraday::Error => e
     ApiCallLogger.log_response(
       service: 'CurrencyAPI',
@@ -73,9 +71,12 @@ class ExchangeRateProvider
       status: 0,
       duration_ms: (Time.current - start_time) * 1000,
       success: false,
-      error: e
+      error: e,
     )
-    raise ApiError, "CurrencyAPI error: #{e.message}"
+    raise ExchangeRateUnavailableError.new(
+      message: "Currency exchange service error: #{e.message}",
+      details: { from: from, to: to },
+    )
   end
 
   # Fetch multiple exchange rates at once
@@ -88,9 +89,15 @@ class ExchangeRateProvider
     response = fetch_latest_rates(base_currency: from, currencies: to_currencies)
     parse_multiple_rates(response, from, to_currencies)
   rescue Faraday::TimeoutError => e
-    raise TimeoutError, "CurrencyAPI timeout: #{e.message}"
+    raise ExchangeRateUnavailableError.new(
+      message: "Currency exchange service timeout: #{e.message}",
+      details: { from: from, to_currencies: to_currencies, timeout: TIMEOUT_SECONDS },
+    )
   rescue Faraday::Error => e
-    raise ApiError, "CurrencyAPI error: #{e.message}"
+    raise ExchangeRateUnavailableError.new(
+      message: "Currency exchange service error: #{e.message}",
+      details: { from: from, to_currencies: to_currencies },
+    )
   end
 
   private
@@ -104,7 +111,7 @@ class ExchangeRateProvider
         interval_randomness: 0.5,
         backoff_factor: 2,
         retry_statuses: [429, 500, 502, 503, 504],
-        methods: [:get]
+        methods: [:get],
       }
       conn.response :json, content_type: /\bjson$/
       conn.adapter Faraday.default_adapter
@@ -119,14 +126,14 @@ class ExchangeRateProvider
     ApiCallLogger.log_request(
       service: 'CurrencyAPI',
       endpoint: '/latest',
-      params: { base_currency: base_currency, currencies: currencies.join(',') }
+      params: { base_currency: base_currency, currencies: currencies.join(',') },
     )
 
-    response = connection.get('latest') do |req|
+    response = connection.get('latest') { |req|
       req.params['apikey'] = @api_key
       req.params['base_currency'] = base_currency
       req.params['currencies'] = currencies.join(',')
-    end
+    }
 
     handle_api_response(response)
   end
@@ -136,38 +143,51 @@ class ExchangeRateProvider
     when 200
       response.body
     when 401
-      raise ApiError, 'Invalid API key'
+      raise ExchangeRateUnavailableError.new(
+        message: 'Invalid API key for currency exchange service',
+        details: { status: 401 },
+      )
     when 422
-      raise InvalidCurrencyError, 'Invalid currency code'
+      raise ExchangeRateUnavailableError.new(
+        message: 'Invalid currency code provided to exchange service',
+        details: { status: 422 },
+      )
     when 429
-      raise RateLimitError, 'API rate limit exceeded'
+      retry_after = response.headers['Retry-After']&.to_i || 60
+      raise RateLimitExceededError.new(
+        message: 'Currency exchange API rate limit exceeded',
+        retry_after: retry_after,
+        details: { status: 429 },
+      )
     else
-      raise ApiError, "API returned status #{response.status}"
+      raise ExchangeRateUnavailableError.new(
+        message: 'Currency exchange service returned unexpected status',
+        details: { status: response.status },
+      )
     end
   end
 
   def parse_rate(response_body, from, to)
     data = response_body.dig('data', to)
-    
+
     if data.nil?
-      raise ApiError, "No rate found for #{from} -> #{to}"
+      raise ExchangeRateUnavailableError.new(
+        message: "No exchange rate available for #{from} -> #{to}",
+        details: { from: from, to: to },
+      )
     end
 
     rate_value = data['value']
     BigDecimal(rate_value.to_s)
   end
 
-  def parse_multiple_rates(response_body, from, to_currencies)
+  def parse_multiple_rates(response_body, _from, to_currencies)
     rates = {}
-    
+
     to_currencies.each do |currency|
       data = response_body.dig('data', currency)
-      
-      if data
-        rates[currency] = BigDecimal(data['value'].to_s)
-      else
-        rates[currency] = nil
-      end
+
+      rates[currency] = (BigDecimal(data['value'].to_s) if data)
     end
 
     rates
@@ -175,11 +195,9 @@ class ExchangeRateProvider
 
   def validate_currencies!(*currencies)
     valid_currencies = Transaction::SUPPORTED_CURRENCIES
-    
+
     currencies.each do |currency|
-      unless valid_currencies.include?(currency)
-        raise InvalidCurrencyError, "Unsupported currency: #{currency}. Valid currencies: #{valid_currencies.join(', ')}"
-      end
+      raise CurrencyNotSupportedError, currency unless valid_currencies.include?(currency)
     end
   end
 
