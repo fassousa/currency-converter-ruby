@@ -1,0 +1,90 @@
+name: currency-converter-api
+region: nyc
+
+# Database
+databases:
+  - name: currency-db
+    engine: PG
+    version: "15"
+    production: true
+    cluster_name: currency-converter-cluster
+
+# Redis Cache
+databases:
+  - name: currency-redis
+    engine: REDIS
+    version: "7"
+    production: true
+
+# API Service
+services:
+  - name: api
+    environment_slug: ruby-rails
+    github:
+      repo: fassousa/currency-converter-ruby
+      branch: main
+      deploy_on_push: true
+    source_dir: /backend
+    
+    # Build Configuration
+    build_command: |
+      bundle install
+      bundle exec rails assets:precompile
+    
+    # Run Configuration
+    run_command: bundle exec puma -C config/puma.rb
+    
+    # Health Check
+    health_check:
+      http_path: /api/v1/health
+      initial_delay_seconds: 60
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    
+    # Environment Variables
+    envs:
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        value: ${currency-db.DATABASE_URL}
+      - key: REDIS_URL
+        scope: RUN_AND_BUILD_TIME
+        value: ${currency-redis.REDIS_URL}
+      - key: SECRET_KEY_BASE
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+      - key: CURRENCY_API_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+      - key: ALLOWED_ORIGINS
+        scope: RUN_AND_BUILD_TIME
+        value: "https://yourdomain.com"
+    
+    # Resources
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    # HTTP Configuration
+    http_port: 3000
+    
+    routes:
+      - path: /
+
+# Jobs (for migrations)
+jobs:
+  - name: db-migrate
+    kind: PRE_DEPLOY
+    environment_slug: ruby-rails
+    source_dir: /backend
+    run_command: bundle exec rails db:migrate
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${currency-db.DATABASE_URL}

@@ -1,0 +1,14 @@
+# Ignore implementation plan and personal notes
+IMPLEMENTATION_PLAN.md
+
+# Editor and system files
+.vscode/
+.idea/
+.DS_Store
+
+# Rails / runtime
+/log/
+/tmp/
+/backend/storage/*.sqlite3
+# Local env files
+backend/.env

@@ -1,0 +1,113 @@
+# RuboCop configuration for Currency Converter API
+
+plugins:
+  - rubocop-rails
+  - rubocop-performance
+
+require:
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'db/migrate/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'storage/**/*'
+    - 'log/**/*'
+    - 'config/environments/*'
+    - 'config/initializers/devise.rb'
+    - 'config/initializers/filter_parameter_logging.rb'
+    - 'config/puma.rb'
+    - 'config/application.rb'
+    - 'config/boot.rb'
+    - 'config/environment.rb'
+    - 'config.ru'
+    - 'Rakefile'
+
+# Disable buggy cops - using full department paths to avoid ambiguity
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false
+
+FactoryBot/AssociationStyle:
+  Enabled: false
+
+FactoryBot/ExcessiveCreateList:
+  Enabled: false
+
+# Layout & Style
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'spec/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+# Allow trailing commas (better for git diffs)
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: consistent_comma
+
+# Metrics
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/routes.rb'
+
+Metrics/MethodLength:
+  Max: 50
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/AbcSize:
+  Max: 35
+  Exclude:
+    - 'spec/**/*'
+
+# Rails
+Rails:
+  Enabled: true
+
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+Rails/SkipsModelValidations:
+  Enabled: false
+
+# RSpec
+RSpec/ExampleLength:
+  Max: 25
+
+RSpec/MultipleExpectations:
+  Max: 5
+  Exclude:
+    - 'spec/integration/**/*'
+    - 'spec/requests/**/*'
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/LetSetup:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/requests/**/*'
+    - 'spec/integration/**/*'
