@@ -7,6 +7,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      # Health check endpoint
+      get 'health', to: 'health#show'
+      
       # Devise handles sign_in/sign_out under api/v1/auth
       # Protected transactions endpoint
       resources :transactions, only: [:index, :create]
