@@ -1,0 +1,225 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe Transactions::Create, type: :service do
+  let(:user) { create(:user) }
+  let(:exchange_rate_provider) { instance_double(ExchangeRateProvider) }
+  let(:service) { described_class.new(user: user, exchange_rate_provider: exchange_rate_provider) }
+  
+  describe '#call' do
+    context 'with valid parameters' do
+      before do
+        allow(exchange_rate_provider).to receive(:fetch_rate)
+          .with(from: 'USD', to: 'EUR')
+          .and_return(BigDecimal('0.85'))
+      end
+      
+      it 'creates a transaction successfully' do
+        expect {
+          service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+        }.to change(Transaction, :count).by(1)
+      end
+      
+      it 'returns the created transaction' do
+        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+        
+        expect(transaction).to be_a(Transaction)
+        expect(transaction).to be_persisted
+        expect(transaction.user).to eq(user)
+      end
+      
+      it 'sets the correct attributes' do
+        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+        
+        expect(transaction.from_currency).to eq('USD')
+        expect(transaction.to_currency).to eq('EUR')
+        expect(transaction.from_value).to eq(BigDecimal('100.00'))
+        expect(transaction.rate).to eq(BigDecimal('0.85'))
+        expect(transaction.to_value).to eq(BigDecimal('85.00'))
+      end
+      
+      it 'calculates the converted amount correctly' do
+        transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+        
+        expect(transaction.to_value).to eq(
+          transaction.from_value * transaction.rate
+        )
+      end
+      
+      it 'fetches the exchange rate from the provider' do
+        expect(exchange_rate_provider).to receive(:fetch_rate)
+          .with(from: 'USD', to: 'EUR')
+          .and_return(BigDecimal('0.85'))
+        
+        service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+      end
+      
+      it 'sets service to successful' do
+        service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
+        expect(service.success?).to be true
+        expect(service.errors).to be_empty
+      end
+    end
+    
+    context 'with different currency pairs' do
+      it 'handles USD to BRL conversion' do
+        allow(exchange_rate_provider).to receive(:fetch_rate)
+          .with(from: 'USD', to: 'BRL')
+          .and_return(BigDecimal('5.25'))
+        
+        transaction = service.call(
+          from_currency: 'USD',
+          to_currency: 'BRL',
+          from_value: '100.00'
+        )
+        
+        expect(transaction.from_currency).to eq('USD')
+        expect(transaction.to_currency).to eq('BRL')
+        expect(transaction.rate).to eq(BigDecimal('5.25'))
+        expect(transaction.to_value).to eq(BigDecimal('525.00'))
+      end
+      
+      it 'handles EUR to JPY conversion' do
+        allow(exchange_rate_provider).to receive(:fetch_rate)
+          .with(from: 'EUR', to: 'JPY')
+          .and_return(BigDecimal('160.25'))
+        
+        transaction = service.call(
+          from_currency: 'EUR',
+          to_currency: 'JPY',
+          from_value: '50.00'
+        )
+        
+        expect(transaction.to_value).to eq(BigDecimal('8012.5'))
+      end
+    end
+    
+    context 'with decimal amounts' do
+      it 'handles amounts with many decimal places and rounds to 4 decimals' do
+        allow(exchange_rate_provider).to receive(:fetch_rate)
+          .and_return(BigDecimal('0.857342'))
+        
+        transaction = service.call(
+          from_currency: 'USD',
+          to_currency: 'EUR',
+          from_value: '123.4568'
+        )
+        
+        expect(transaction.from_value).to eq(BigDecimal('123.4568'))
+        # 123.4568 * 0.857342 = 105.8447... rounded to 4 decimals = 105.8447
+        expect(transaction.to_value).to eq(BigDecimal('105.8447'))
+      end
+    end
+    
+    context 'when from_currency is missing' do
+      it 'returns nil and sets errors' do
+        result = service.call(
+          from_currency: '',
+          to_currency: 'EUR',
+          from_value: '100'
+        )
+        
+        expect(result).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Source currency is required/)
+      end
+    end
+    
+    context 'when to_currency is missing' do
+      it 'returns nil and sets errors' do
+        result = service.call(
+          from_currency: 'USD',
+          to_currency: '',
+          from_value: '100'
+        )
+        
+        expect(result).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Target currency is required/)
+      end
+    end
+    
+    context 'when from_value is invalid' do
+      it 'returns nil and sets errors for negative amount' do
+        result = service.call(
+          from_currency: 'USD',
+          to_currency: 'EUR',
+          from_value: '-100'
+        )
+        
+        expect(result).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Amount must be greater than zero/)
+      end
+      
+      it 'returns nil and sets errors for zero amount' do
+        result = service.call(
+          from_currency: 'USD',
+          to_currency: 'EUR',
+          from_value: '0'
+        )
+        
+        expect(result).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Amount must be greater than zero/)
+      end
+      
+      it 'returns nil and sets errors for blank amount' do
+        result = service.call(
+          from_currency: 'USD',
+          to_currency: 'EUR',
+          from_value: ''
+        )
+        
+        expect(result).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Amount must be greater than zero/)
+      end
+    end
+    
+    context 'when currencies are the same' do
+      it 'returns nil and sets errors' do
+        result = service.call(
+          from_currency: 'USD',
+          to_currency: 'USD',
+          from_value: '100'
+        )
+        
+        expect(result).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Source and target currencies must be different/)
+      end
+    end
+    
+    context 'when exchange rate provider fails' do
+      it 'returns nil and sets errors' do
+        allow(exchange_rate_provider).to receive(:fetch_rate)
+          .and_raise(ExchangeRateProvider::ApiError, 'API error')
+        
+        transaction = service.call(
+          from_currency: 'USD',
+          to_currency: 'EUR',
+          from_value: '100'
+        )
+        
+        expect(transaction).to be_nil
+        expect(service.success?).to be false
+        expect(service.errors).to include(/Failed to fetch exchange rate/)
+      end
+      
+      it 'does not create a transaction' do
+        allow(exchange_rate_provider).to receive(:fetch_rate)
+          .and_raise(ExchangeRateProvider::ApiError, 'API error')
+        
+        expect {
+          service.call(
+            from_currency: 'USD',
+            to_currency: 'EUR',
+            from_value: '100'
+          )
+        }.not_to change(Transaction, :count)
+      end
+    end
+  end
+end
