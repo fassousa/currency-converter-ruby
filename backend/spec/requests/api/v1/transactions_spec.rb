@@ -30,7 +30,7 @@ RSpec.describe 'Api::V1::Transactions', type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(json_response['transactions'].size).to eq(5)
-        expect(json_response['count']).to eq(5)
+        expect(json_response['meta']['total_count']).to eq(5)
         expect(json_response['transactions'].first.keys).to match_array(expected_fields)
       end
 
@@ -41,10 +41,26 @@ RSpec.describe 'Api::V1::Transactions', type: :request do
         expect(timestamps).to eq(timestamps.sort.reverse)
       end
 
-      it 'limits results to 100 transactions' do
-        create_list(:transaction, 120, user: user)
+      it 'paginates results with 20 per page by default' do
+        create_list(:transaction, 30, user: user)
         get '/api/v1/transactions', headers: auth_headers
 
+        expect(json_response['transactions'].size).to eq(20)
+        expect(json_response['meta']['total_count']).to eq(35)
+        expect(json_response['meta']['total_pages']).to eq(2)
+      end
+
+      it 'respects custom per_page parameter up to 100' do
+        create_list(:transaction, 120, user: user)
+        get '/api/v1/transactions', params: { per_page: 50 }, headers: auth_headers
+
+        expect(json_response['transactions'].size).to eq(50)
+      end
+
+      it 'enforces maximum limit of 100 per page' do
+        create_list(:transaction, 120, user: user)
+        get '/api/v1/transactions', params: { per_page: 200 }, headers: auth_headers
+        
         expect(json_response['transactions'].size).to eq(100)
       end
     end

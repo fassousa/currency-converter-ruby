@@ -2,15 +2,17 @@ module Api
   module V1
     class TransactionsController < BaseController
       # GET /api/v1/transactions
-      # Returns transactions for the authenticated user
+      # Returns transactions for the authenticated user with pagination
+      # Params: page (default: 1), per_page (default: 20, max: 100)
       def index
-        transactions = current_user.transactions.order(timestamp: :desc).limit(100)
+        transactions = current_user.transactions
+                                   .order(timestamp: :desc)
+                                   .page(params[:page] || 1)
+                                   .per(per_page_param)
         
         render json: {
-          transactions: transactions.as_json(
-            only: [:id, :from_currency, :to_currency, :from_value, :to_value, :rate, :timestamp]
-          ),
-          count: transactions.count
+          transactions: TransactionSerializer.collection(transactions),
+          meta: pagination_meta(transactions)
         }, status: :ok
       end
 
@@ -28,9 +30,7 @@ module Api
 
         if transaction
           render json: {
-            transaction: transaction.as_json(
-              only: [:id, :from_currency, :to_currency, :from_value, :to_value, :rate, :timestamp]
-            ),
+            transaction: TransactionSerializer.new(transaction).as_json,
             message: 'Transaction created successfully'
           }, status: :created
         else
@@ -38,6 +38,25 @@ module Api
             errors: service.errors
           }, status: :unprocessable_entity
         end
+      end
+
+      private
+
+      def per_page_param
+        per_page = params[:per_page].to_i
+        per_page = 20 if per_page <= 0
+        per_page = 100 if per_page > 100
+        per_page
+      end
+
+      def pagination_meta(collection)
+        {
+          current_page: collection.current_page,
+          next_page: collection.next_page,
+          prev_page: collection.prev_page,
+          total_pages: collection.total_pages,
+          total_count: collection.total_count
+        }
       end
     end
   end
