@@ -12,3 +12,12 @@ IMPLEMENTATION_PLAN.md
 /backend/storage/*.sqlite3
 # Local env files
 backend/.env
+
+# Archived documentation (already deleted)
+docs/
+DEV_SETUP.md
+backend/README.md
+
+# Unused deployment configs and scripts
+.do/
+scripts/

@@ -2,7 +2,7 @@
 
 Production-ready Rails API for real-time currency conversion with JWT authentication.
 
-🌐 **Live:** http://161.35.142.103 | 📚 **Docs:** http://161.35.142.103/api-docs | ✅ **Tests:** 129 passing
+🌐 **Live:** http://161.35.142.103 | 📚 **Docs:** http://161.35.142.103/api-docs | ✅ **Tests:** 190 passing (79% coverage)
 
 ## Quick Start
 
@@ -44,9 +44,9 @@ curl -X POST http://161.35.142.103/api/v1/transactions \
 
 - ✅ 10+ currencies with real-time rates ([CurrencyAPI](https://currencyapi.com))
 - ✅ JWT authentication (Devise)
-- ✅ Transaction history
+- ✅ Transaction history with pagination
 - ✅ Swagger documentation
-- ✅ 129 tests (RSpec) - 95% coverage
+- ✅ 190 tests (RSpec) - 79% coverage
 - ✅ Production deployment (Digital Ocean)
 - ✅ CI/CD (GitHub Actions)
 - ✅ Security scans (Brakeman, Bundler Audit)
@@ -76,6 +76,7 @@ bundle exec brakeman           # Security scan
 
 ## Documentation
 
+- 📖 [Architecture Decisions](ARCHITECTURE_DECISIONS.md) - Technical choices & rationale
 - 📖 [Development Guide](DEVELOPMENT.md) - Setup & workflows
 - 📖 [API Reference](backend/API_DOCUMENTATION.md) - Endpoints
 - 📖 [Deployment](DEPLOYMENT.md) - Production setup
