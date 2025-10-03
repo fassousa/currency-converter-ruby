@@ -18,6 +18,9 @@ require "action_cable/engine"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Require custom middleware
+require_relative '../app/middleware/performance_monitoring'
+
 module Backend
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -27,6 +30,9 @@ module Backend
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w(assets tasks))
+    
+    # Autoload middleware
+    config.autoload_paths << Rails.root.join('app/middleware')
     
     # Load custom Devise classes
     config.autoload_paths << Rails.root.join('lib')
@@ -51,5 +57,11 @@ module Backend
 
     # Enable Rack::Attack for rate limiting
     config.middleware.use Rack::Attack
+
+    # Enable performance monitoring middleware
+    config.middleware.use PerformanceMonitoring
+
+    # Application version for health check
+    config.version = '1.0.0'
   end
 end
