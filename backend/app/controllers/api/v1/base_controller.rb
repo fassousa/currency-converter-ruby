@@ -10,7 +10,7 @@ module Api
       private
 
       def ensure_json_request
-        return if request.format.json?
+        return if request.format.json? || request.format.html?
         render json: { error: 'Unsupported Media Type' }, status: :unsupported_media_type
       end
 
