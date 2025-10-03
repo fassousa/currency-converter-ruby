@@ -30,7 +30,10 @@ AllCops:
     - 'config.ru'
     - 'Rakefile'
 
-# Disable buggy RSpec/FactoryBot cops
+# Disable buggy RSpec/FactoryBot/Capybara cops
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false
+
 FactoryBot/AssociationStyle:
   Enabled: false
 
@@ -48,6 +51,16 @@ Style/Documentation:
 
 Style/FrozenStringLiteralComment:
   Enabled: true
+
+# Allow trailing commas (better for git diffs)
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: consistent_comma
 
 # Metrics
 Metrics/BlockLength:

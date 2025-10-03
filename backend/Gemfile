@@ -9,11 +9,11 @@ gem 'rails', '~> 7.1.5', '>= 7.1.5.2'
 
 # Use sqlite3 for development and test, postgresql for production
 gem 'pg', '~> 1.1', group: :production
-gem 'sqlite3', '~> 1.4', groups: [:development, :test]
+gem 'sqlite3', '~> 1.4', groups: %i[development test]
 
 # Use the Puma web server [https://github.com/puma/puma]
-gem 'dotenv', groups: [:development, :test]
-gem 'dotenv-rails', groups: [:development, :test]
+gem 'dotenv', groups: %i[development test]
+gem 'dotenv-rails', groups: %i[development test]
 gem 'puma', '>= 5.0'
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
@@ -29,7 +29,7 @@ gem 'puma', '>= 5.0'
 # gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem 'tzinfo-data', platforms: [:windows, :jruby]
+gem 'tzinfo-data', platforms: %i[windows jruby]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', require: false
@@ -69,7 +69,7 @@ gem 'rswag', '~> 2.13'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem 'debug', platforms: [:mri, :windows]
+  gem 'debug', platforms: %i[mri windows]
 
   gem 'factory_bot_rails', '~> 6.2'
   gem 'faker', '~> 3.2'

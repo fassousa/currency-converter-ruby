@@ -9,7 +9,7 @@ RSpec.describe Transaction do
 
   describe 'constants' do
     it 'defines supported currencies' do
-      expect(Transaction::SUPPORTED_CURRENCIES).to eq(['BRL', 'USD', 'EUR', 'JPY'])
+      expect(Transaction::SUPPORTED_CURRENCIES).to eq(%w[BRL USD EUR JPY])
     end
 
     it 'freezes supported currencies constant' do

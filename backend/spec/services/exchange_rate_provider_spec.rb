@@ -60,15 +60,15 @@ RSpec.describe ExchangeRateProvider, type: :service do
             headers: { 'Content-Type' => 'application/json' },
           )
 
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'EUR')
-        }.to raise_error(ExchangeRateUnavailableError, /Invalid API key/)
+        end.to raise_error(ExchangeRateUnavailableError, /Invalid API key/)
       end
 
       it 'raises an error for invalid currency' do
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'INVALID')
-        }.to raise_error(CurrencyNotSupportedError)
+        end.to raise_error(CurrencyNotSupportedError)
       end
 
       it 'raises an error for 500 server error' do
@@ -76,9 +76,9 @@ RSpec.describe ExchangeRateProvider, type: :service do
           .with(query: hash_including('apikey' => api_key))
           .to_return(status: 500)
 
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'EUR')
-        }.to raise_error(ExchangeRateUnavailableError, /unexpected status/)
+        end.to raise_error(ExchangeRateUnavailableError, /unexpected status/)
       end
     end
 
@@ -96,9 +96,9 @@ RSpec.describe ExchangeRateProvider, type: :service do
             headers: { 'Content-Type' => 'application/json' },
           )
 
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'EUR')
-        }.to raise_error(ExchangeRateUnavailableError, /No exchange rate available/)
+        end.to raise_error(ExchangeRateUnavailableError, /No exchange rate available/)
       end
 
       it 'raises an error when data key is missing' do
@@ -110,9 +110,9 @@ RSpec.describe ExchangeRateProvider, type: :service do
             headers: { 'Content-Type' => 'application/json' },
           )
 
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'EUR')
-        }.to raise_error(ExchangeRateUnavailableError, /No exchange rate available/)
+        end.to raise_error(ExchangeRateUnavailableError, /No exchange rate available/)
       end
     end
 
@@ -122,9 +122,9 @@ RSpec.describe ExchangeRateProvider, type: :service do
           .with(query: hash_including('apikey' => api_key))
           .to_raise(Faraday::TimeoutError.new('execution expired'))
 
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'EUR')
-        }.to raise_error(ExchangeRateUnavailableError, /timeout/)
+        end.to raise_error(ExchangeRateUnavailableError, /timeout/)
       end
 
       it 'raises an error for connection failure' do
@@ -132,9 +132,9 @@ RSpec.describe ExchangeRateProvider, type: :service do
           .with(query: hash_including('apikey' => api_key))
           .to_raise(Faraday::ConnectionFailed.new('Connection refused'))
 
-        expect {
+        expect do
           provider.fetch_rate(from: 'USD', to: 'EUR')
-        }.to raise_error(ExchangeRateUnavailableError, /service error/)
+        end.to raise_error(ExchangeRateUnavailableError, /service error/)
       end
     end
 

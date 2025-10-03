@@ -129,11 +129,11 @@ class ExchangeRateProvider
       params: { base_currency: base_currency, currencies: currencies.join(',') },
     )
 
-    response = connection.get('latest') { |req|
+    response = connection.get('latest') do |req|
       req.params['apikey'] = @api_key
       req.params['base_currency'] = base_currency
       req.params['currencies'] = currencies.join(',')
-    }
+    end
 
     handle_api_response(response)
   end

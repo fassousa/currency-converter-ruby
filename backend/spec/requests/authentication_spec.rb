@@ -14,9 +14,9 @@ RSpec.describe 'Authentication' do
 
   describe 'POST /api/v1/auth (sign up)' do
     it 'creates a new user' do
-      expect {
+      expect do
         post '/api/v1/auth', params: user_params, as: :json
-      }.to change(User, :count).by(1)
+      end.to change(User, :count).by(1)
 
       expect(response).to have_http_status(:created)
 

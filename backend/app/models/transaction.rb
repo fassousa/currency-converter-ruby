@@ -4,7 +4,7 @@ class Transaction < ApplicationRecord
   belongs_to :user
 
   # Supported currencies
-  SUPPORTED_CURRENCIES = ['BRL', 'USD', 'EUR', 'JPY'].freeze
+  SUPPORTED_CURRENCIES = %w[BRL USD EUR JPY].freeze
 
   # Validations
   validates :from_currency, presence: true, inclusion: { in: SUPPORTED_CURRENCIES }

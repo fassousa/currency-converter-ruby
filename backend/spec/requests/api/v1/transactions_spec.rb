@@ -10,7 +10,7 @@ RSpec.describe 'Api::V1::Transactions' do
   end
   let(:auth_headers) { { 'Authorization' => auth_token } }
   let(:json_response) { response.parsed_body }
-  let(:expected_fields) { ['id', 'from_currency', 'to_currency', 'from_value', 'to_value', 'rate', 'timestamp'] }
+  let(:expected_fields) { %w[id from_currency to_currency from_value to_value rate timestamp] }
 
   before do
     stub_request(:get, /api.currencyapi.com/).to_return(
@@ -81,9 +81,9 @@ RSpec.describe 'Api::V1::Transactions' do
     context 'when authenticated' do
       context 'with valid parameters' do
         it 'creates transaction and returns it with success message' do
-          expect {
+          expect do
             post '/api/v1/transactions', params: valid_params, headers: auth_headers
-          }.to change(Transaction, :count).by(1)
+          end.to change(Transaction, :count).by(1)
 
           expect(response).to have_http_status(:created)
           expect(json_response['transaction']['from_currency']).to eq('USD')
@@ -99,9 +99,9 @@ RSpec.describe 'Api::V1::Transactions' do
           it "rejects #{params_change.keys.first}" do
             invalid_params = params_change[:merge] ? valid_params.merge(params_change[:merge]) : valid_params.except(*params_change[:except])
 
-            expect {
+            expect do
               post '/api/v1/transactions', params: invalid_params, headers: auth_headers
-            }.not_to change(Transaction, :count)
+            end.not_to change(Transaction, :count)
 
             expect(response).to have_http_status(:unprocessable_entity)
             expect(json_response['error']).to be_present
@@ -122,9 +122,9 @@ RSpec.describe 'Api::V1::Transactions' do
         end
 
         it 'returns error and does not create transaction' do
-          expect {
+          expect do
             post '/api/v1/transactions', params: valid_params, headers: auth_headers
-          }.not_to change(Transaction, :count)
+          end.not_to change(Transaction, :count)
 
           expect(response).to have_http_status(:service_unavailable)
           expect(json_response['error']).to be_present
@@ -134,9 +134,9 @@ RSpec.describe 'Api::V1::Transactions' do
 
     context 'when not authenticated' do
       it 'returns unauthorized and does not create transaction' do
-        expect {
+        expect do
           post '/api/v1/transactions', params: valid_params
-        }.not_to change(Transaction, :count)
+        end.not_to change(Transaction, :count)
 
         expect(response).to have_http_status(:unauthorized)
       end

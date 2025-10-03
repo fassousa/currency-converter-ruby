@@ -16,7 +16,7 @@ Rails.application.routes.draw do
 
       # Devise handles sign_in/sign_out under api/v1/auth
       # Protected transactions endpoint
-      resources :transactions, only: [:index, :create]
+      resources :transactions, only: %i[index create]
     end
   end
 

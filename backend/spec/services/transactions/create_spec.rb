@@ -16,9 +16,9 @@ RSpec.describe Transactions::Create, type: :service do
       end
 
       it 'creates a transaction successfully' do
-        expect {
+        expect do
           service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-        }.to change(Transaction, :count).by(1)
+        end.to change(Transaction, :count).by(1)
       end
 
       it 'returns the created transaction' do
@@ -114,69 +114,69 @@ RSpec.describe Transactions::Create, type: :service do
 
     context 'when from_currency is missing' do
       it 'raises ApplicationError' do
-        expect {
+        expect do
           service.call(
             from_currency: '',
             to_currency: 'EUR',
             from_value: '100',
           )
-        }.to raise_error(ApplicationError, /Source currency is required/)
+        end.to raise_error(ApplicationError, /Source currency is required/)
       end
     end
 
     context 'when to_currency is missing' do
       it 'raises ApplicationError' do
-        expect {
+        expect do
           service.call(
             from_currency: 'USD',
             to_currency: '',
             from_value: '100',
           )
-        }.to raise_error(ApplicationError, /Target currency is required/)
+        end.to raise_error(ApplicationError, /Target currency is required/)
       end
     end
 
     context 'when from_value is invalid' do
       it 'raises ApplicationError for negative amount' do
-        expect {
+        expect do
           service.call(
             from_currency: 'USD',
             to_currency: 'EUR',
             from_value: '-100',
           )
-        }.to raise_error(ApplicationError, /Amount must be greater than zero/)
+        end.to raise_error(ApplicationError, /Amount must be greater than zero/)
       end
 
       it 'raises ApplicationError for zero amount' do
-        expect {
+        expect do
           service.call(
             from_currency: 'USD',
             to_currency: 'EUR',
             from_value: '0',
           )
-        }.to raise_error(ApplicationError, /Amount must be greater than zero/)
+        end.to raise_error(ApplicationError, /Amount must be greater than zero/)
       end
 
       it 'raises ApplicationError for blank amount' do
-        expect {
+        expect do
           service.call(
             from_currency: 'USD',
             to_currency: 'EUR',
             from_value: '',
           )
-        }.to raise_error(ApplicationError, /Amount must be greater than zero/)
+        end.to raise_error(ApplicationError, /Amount must be greater than zero/)
       end
     end
 
     context 'when currencies are the same' do
       it 'raises ApplicationError' do
-        expect {
+        expect do
           service.call(
             from_currency: 'USD',
             to_currency: 'USD',
             from_value: '100',
           )
-        }.to raise_error(ApplicationError, /Source and target currencies must be different/)
+        end.to raise_error(ApplicationError, /Source and target currencies must be different/)
       end
     end
 
@@ -185,28 +185,28 @@ RSpec.describe Transactions::Create, type: :service do
         allow(exchange_rate_provider).to receive(:fetch_rate)
           .and_raise(ExchangeRateUnavailableError.new(message: 'API error'))
 
-        expect {
+        expect do
           service.call(
             from_currency: 'USD',
             to_currency: 'EUR',
             from_value: '100',
           )
-        }.to raise_error(ExchangeRateUnavailableError, /API error/)
+        end.to raise_error(ExchangeRateUnavailableError, /API error/)
       end
 
       it 'does not create a transaction' do
         allow(exchange_rate_provider).to receive(:fetch_rate)
           .and_raise(ExchangeRateUnavailableError.new(message: 'API error'))
 
-        expect {
-          expect {
+        expect do
+          expect do
             service.call(
               from_currency: 'USD',
               to_currency: 'EUR',
               from_value: '100',
             )
-          }.to raise_error(ExchangeRateUnavailableError)
-        }.not_to change(Transaction, :count)
+          end.to raise_error(ExchangeRateUnavailableError)
+        end.not_to change(Transaction, :count)
       end
     end
   end
