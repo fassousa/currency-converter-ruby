@@ -31,16 +31,50 @@ class ExchangeRateProvider
     # Try to fetch from cache first
     cache_key = rate_cache_key(from, to)
     cached_rate = Rails.cache.read(cache_key)
-    return BigDecimal(cached_rate) if cached_rate
+    
+    if cached_rate
+      ApiCallLogger.log_cache_hit(service: 'CurrencyAPI', cache_key: cache_key)
+      return BigDecimal(cached_rate)
+    end
+
+    ApiCallLogger.log_cache_miss(service: 'CurrencyAPI', cache_key: cache_key)
 
     # Fetch from API and cache the result
+    start_time = Time.current
     response = fetch_latest_rates(base_currency: from, currencies: [to])
+    duration_ms = (Time.current - start_time) * 1000
+    
     rate = parse_rate(response, from, to)
     Rails.cache.write(cache_key, rate.to_s, expires_in: CACHE_EXPIRATION)
+    
+    ApiCallLogger.log_response(
+      service: 'CurrencyAPI',
+      endpoint: '/latest',
+      status: 200,
+      duration_ms: duration_ms,
+      success: true
+    )
+    
     rate
   rescue Faraday::TimeoutError => e
+    ApiCallLogger.log_response(
+      service: 'CurrencyAPI',
+      endpoint: '/latest',
+      status: 0,
+      duration_ms: (Time.current - start_time) * 1000,
+      success: false,
+      error: e
+    )
     raise TimeoutError, "CurrencyAPI timeout: #{e.message}"
   rescue Faraday::Error => e
+    ApiCallLogger.log_response(
+      service: 'CurrencyAPI',
+      endpoint: '/latest',
+      status: 0,
+      duration_ms: (Time.current - start_time) * 1000,
+      success: false,
+      error: e
+    )
     raise ApiError, "CurrencyAPI error: #{e.message}"
   end
 
@@ -82,6 +116,12 @@ class ExchangeRateProvider
   # CurrencyAPI endpoint: /latest
   # Returns latest exchange rates for specified currencies
   def fetch_latest_rates(base_currency:, currencies:)
+    ApiCallLogger.log_request(
+      service: 'CurrencyAPI',
+      endpoint: '/latest',
+      params: { base_currency: base_currency, currencies: currencies.join(',') }
+    )
+
     response = connection.get('latest') do |req|
       req.params['apikey'] = @api_key
       req.params['base_currency'] = base_currency
