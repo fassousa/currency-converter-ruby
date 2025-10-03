@@ -13,9 +13,12 @@ Rails.application.routes.draw do
     end
   end
 
-  # Devise API routes for users (JSON). Sessions are handled by Api::V1::SessionsController
+  # Devise API routes for users (JSON)
   devise_for :users,
-             controllers: { sessions: 'api/v1/sessions' },
+             controllers: {
+               sessions: 'api/v1/sessions',
+               registrations: 'api/v1/registrations'
+             },
              path: 'api/v1/auth',
              path_names: { sign_in: 'sign_in', sign_out: 'sign_out' }
 
