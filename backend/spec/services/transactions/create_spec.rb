@@ -16,18 +16,18 @@ RSpec.describe Transactions::Create, type: :service do
       end
 
       it 'creates and returns a persisted transaction with correct attributes' do
-        expect {
+        expect do
           transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '100.00')
-          
+
           expect(transaction).to be_persisted.and have_attributes(
             user: user,
             from_currency: 'USD',
             to_currency: 'EUR',
             from_value: BigDecimal('100.00'),
             rate: BigDecimal('0.85'),
-            to_value: BigDecimal('85.00')
+            to_value: BigDecimal('85.00'),
           )
-        }.to change(Transaction, :count).by(1)
+        end.to change(Transaction, :count).by(1)
       end
 
       it 'fetches the exchange rate from the provider' do
@@ -55,7 +55,7 @@ RSpec.describe Transactions::Create, type: :service do
 
         transaction = service.call(from_currency: 'USD', to_currency: 'EUR', from_value: '123.4568')
 
-        expect(transaction.to_value).to eq(BigDecimal('105.8447'))  # 123.4568 * 0.857342 rounded
+        expect(transaction.to_value).to eq(BigDecimal('105.8447')) # 123.4568 * 0.857342 rounded
       end
     end
 

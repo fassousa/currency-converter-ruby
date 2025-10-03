@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe PerformanceMonitoring do
-  let(:app) { ->(env) { [200, { 'Content-Type' => 'text/plain' }, ['OK']] } }
+  let(:app) { ->(_env) { [200, { 'Content-Type' => 'text/plain' }, ['OK']] } }
   let(:middleware) { described_class.new(app) }
   let(:env) { { 'REQUEST_METHOD' => 'GET', 'PATH_INFO' => '/api/v1/transactions', 'QUERY_STRING' => '', 'rack.input' => StringIO.new } }
 
@@ -21,7 +21,10 @@ RSpec.describe PerformanceMonitoring do
 
   it 'logs slow requests as warnings' do
     allow(Rails.logger).to receive(:warn)
-    slow_app = ->(env) { sleep(1.1); [200, {}, ['OK']] }
+    slow_app = lambda { |_env|
+      sleep(1.1)
+      [200, {}, ['OK']]
+    }
     described_class.new(slow_app).call(env.merge('PATH_INFO' => '/slow'))
 
     expect(Rails.logger).to have_received(:warn) do |msg|
