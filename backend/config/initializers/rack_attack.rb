@@ -8,23 +8,26 @@ class Rack::Attack
 
   ### Throttle Configuration ###
   
-  # Throttle all requests by IP (100 req/minute)
-  throttle('req/ip', limit: 100, period: 1.minute) do |req|
-    req.ip
-  end
-
-  # Throttle login attempts by IP address
-  throttle('logins/ip', limit: 5, period: 20.seconds) do |req|
-    if req.path == '/api/v1/auth/sign_in' && req.post?
+  # Skip rate limiting in test environment
+  unless Rails.env.test?
+    # Throttle all requests by IP (100 req/minute)
+    throttle('req/ip', limit: 100, period: 1.minute) do |req|
       req.ip
     end
-  end
 
-  # Throttle login attempts by email address
-  throttle('logins/email', limit: 5, period: 20.seconds) do |req|
-    if req.path == '/api/v1/auth/sign_in' && req.post?
-      # Return the email if present in POST data
-      req.params['user']&.dig('email')&.to_s&.downcase&.presence
+    # Throttle login attempts by IP address
+    throttle('logins/ip', limit: 5, period: 20.seconds) do |req|
+      if req.path == '/api/v1/auth/sign_in' && req.post?
+        req.ip
+      end
+    end
+
+    # Throttle login attempts by email address
+    throttle('logins/email', limit: 5, period: 20.seconds) do |req|
+      if req.path == '/api/v1/auth/sign_in' && req.post?
+        # Return the email if present in POST data
+        req.params['user']&.dig('email')&.to_s&.downcase&.presence
+      end
     end
   end
 
