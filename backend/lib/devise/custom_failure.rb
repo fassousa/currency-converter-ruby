@@ -15,15 +15,16 @@ module Devise
       self.content_type = 'application/json'
       self.response_body = { error: 'Unauthorized' }.to_json
     end
-    
+
     # Skip store_location for API requests
     def store_location!
       return if api_request?
+
       super
     end
-    
+
     private
-    
+
     def api_request?
       request.content_type == 'application/json' || request.path.start_with?('/api/')
     end

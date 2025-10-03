@@ -11,13 +11,13 @@ class PerformanceMonitoring
   def call(env)
     start_time = Time.current
     request = ActionDispatch::Request.new(env)
-    
+
     status, headers, response = @app.call(env)
-    
+
     duration_ms = ((Time.current - start_time) * 1000).round(2)
-    
+
     log_performance(request, status, duration_ms) if should_log?(request, duration_ms)
-    
+
     [status, headers, response]
   end
 
@@ -30,7 +30,7 @@ class PerformanceMonitoring
 
   def log_performance(request, status, duration_ms)
     level = duration_ms >= SLOW_REQUEST_THRESHOLD ? :warn : :info
-    
+
     Rails.logger.public_send(level, {
       event: 'performance_monitoring',
       method: request.method,
@@ -41,8 +41,8 @@ class PerformanceMonitoring
       threshold_ms: SLOW_REQUEST_THRESHOLD,
       db_runtime_ms: db_runtime,
       view_runtime_ms: view_runtime,
-      timestamp: Time.current.iso8601
-    }.to_json)
+      timestamp: Time.current.iso8601,
+    }.to_json,)
   end
 
   def db_runtime

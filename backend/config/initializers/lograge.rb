@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Lograge configuration for structured JSON logging
 Rails.application.configure do
   # Enable Lograge
@@ -15,7 +17,7 @@ Rails.application.configure do
       request_id: event.payload[:request_id],
       params: event.payload[:params]&.except('controller', 'action', 'format'),
       exception: event.payload[:exception]&.first,
-      exception_message: event.payload[:exception]&.last
+      exception_message: event.payload[:exception]&.last,
     }.compact
   end
 
@@ -25,7 +27,7 @@ Rails.application.configure do
       host: controller.request.host,
       remote_ip: controller.request.remote_ip,
       user_id: controller.current_user&.id,
-      request_id: controller.request.uuid
+      request_id: controller.request.uuid,
     }
   end
 end

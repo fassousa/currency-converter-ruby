@@ -2,10 +2,16 @@
 
 FactoryBot.define do
   factory :user do
-    email { Faker::Internet.unique.email }
-    password { 'password123' }
-    password_confirmation { 'password123' }
-    
+    email do
+      Faker::Internet.unique.email
+    end
+    password do
+      'password123'
+    end
+    password_confirmation do
+      'password123'
+    end
+
     trait :with_transactions do
       after(:create) do |user|
         create_list(:transaction, 3, user: user)

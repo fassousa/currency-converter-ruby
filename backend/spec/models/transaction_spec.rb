@@ -1,13 +1,15 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-RSpec.describe Transaction, type: :model do
+RSpec.describe Transaction do
   describe 'associations' do
-    it { should belong_to(:user) }
+    it { is_expected.to belong_to(:user) }
   end
 
   describe 'constants' do
     it 'defines supported currencies' do
-      expect(Transaction::SUPPORTED_CURRENCIES).to eq(%w[BRL USD EUR JPY])
+      expect(Transaction::SUPPORTED_CURRENCIES).to eq(['BRL', 'USD', 'EUR', 'JPY'])
     end
 
     it 'freezes supported currencies constant' do
@@ -19,8 +21,8 @@ RSpec.describe Transaction, type: :model do
     subject { build(:transaction) }
 
     describe 'currency validations' do
-      it { should validate_presence_of(:from_currency) }
-      it { should validate_presence_of(:to_currency) }
+      it { is_expected.to validate_presence_of(:from_currency) }
+      it { is_expected.to validate_presence_of(:to_currency) }
 
       it 'validates from_currency is in supported list' do
         transaction = build(:transaction, from_currency: 'INVALID')
@@ -62,13 +64,13 @@ RSpec.describe Transaction, type: :model do
     end
 
     describe 'numeric validations' do
-      it { should validate_presence_of(:from_value) }
-      it { should validate_presence_of(:to_value) }
-      it { should validate_presence_of(:rate) }
+      it { is_expected.to validate_presence_of(:from_value) }
+      it { is_expected.to validate_presence_of(:to_value) }
+      it { is_expected.to validate_presence_of(:rate) }
 
-      it { should validate_numericality_of(:from_value).is_greater_than(0) }
-      it { should validate_numericality_of(:to_value).is_greater_than(0) }
-      it { should validate_numericality_of(:rate).is_greater_than(0.0001) }
+      it { is_expected.to validate_numericality_of(:from_value).is_greater_than(0) }
+      it { is_expected.to validate_numericality_of(:to_value).is_greater_than(0) }
+      it { is_expected.to validate_numericality_of(:rate).is_greater_than(0.0001) }
 
       it 'rejects zero from_value' do
         transaction = build(:transaction, from_value: 0)
@@ -107,7 +109,7 @@ RSpec.describe Transaction, type: :model do
     end
 
     describe 'timestamp validation' do
-      # Note: timestamp is auto-set by before_validation callback, so presence validation will always pass
+      # NOTE: timestamp is auto-set by before_validation callback, so presence validation will always pass
       it 'auto-sets timestamp when nil' do
         transaction = build(:transaction, timestamp: nil)
         transaction.valid?
@@ -147,13 +149,13 @@ RSpec.describe Transaction, type: :model do
         user_transaction = create(:transaction, user: user)
         other_transaction = create(:transaction, user: other_user)
 
-        result = Transaction.by_user(user.id)
+        result = described_class.by_user(user.id)
         expect(result).to include(user_transaction)
         expect(result).not_to include(other_transaction)
       end
 
       it 'returns empty collection when user has no transactions' do
-        result = Transaction.by_user(user.id)
+        result = described_class.by_user(user.id)
         expect(result).to be_empty
       end
     end
@@ -164,7 +166,7 @@ RSpec.describe Transaction, type: :model do
         recent_transaction = create(:transaction, timestamp: 1.hour.ago)
         newest_transaction = create(:transaction, timestamp: 5.minutes.ago)
 
-        result = Transaction.recent
+        result = described_class.recent
         expect(result.first).to eq(newest_transaction)
         expect(result.second).to eq(recent_transaction)
         expect(result.third).to eq(old_transaction)
@@ -176,7 +178,7 @@ RSpec.describe Transaction, type: :model do
         usd_brl = create(:transaction, from_currency: 'USD', to_currency: 'BRL')
         eur_jpy = create(:transaction, from_currency: 'EUR', to_currency: 'JPY')
 
-        result = Transaction.by_currency_pair('USD', 'BRL')
+        result = described_class.by_currency_pair('USD', 'BRL')
         expect(result).to include(usd_brl)
         expect(result).not_to include(eur_jpy)
       end
@@ -184,7 +186,7 @@ RSpec.describe Transaction, type: :model do
       it 'returns empty collection when no matching pairs exist' do
         create(:transaction, from_currency: 'USD', to_currency: 'BRL')
 
-        result = Transaction.by_currency_pair('EUR', 'JPY')
+        result = described_class.by_currency_pair('EUR', 'JPY')
         expect(result).to be_empty
       end
     end
@@ -192,13 +194,13 @@ RSpec.describe Transaction, type: :model do
     it 'can chain scopes' do
       user1 = create(:user)
       user2 = create(:user)
-      
+
       old_usd_brl = create(:transaction, user: user1, from_currency: 'USD', to_currency: 'BRL', timestamp: 2.days.ago)
       recent_usd_brl = create(:transaction, user: user1, from_currency: 'USD', to_currency: 'BRL', timestamp: 1.hour.ago)
       create(:transaction, user: user2, from_currency: 'USD', to_currency: 'BRL', timestamp: 1.minute.ago)
       create(:transaction, user: user1, from_currency: 'EUR', to_currency: 'JPY', timestamp: 30.minutes.ago)
 
-      result = Transaction.by_user(user1.id).by_currency_pair('USD', 'BRL').recent
+      result = described_class.by_user(user1.id).by_currency_pair('USD', 'BRL').recent
       expect(result.count).to eq(2)
       expect(result.first).to eq(recent_usd_brl)
       expect(result.second).to eq(old_usd_brl)
@@ -222,7 +224,7 @@ RSpec.describe Transaction, type: :model do
     end
 
     it 'handles very large values' do
-      transaction = create(:transaction, from_value: 99999999.9999)
+      transaction = create(:transaction, from_value: 99_999_999.9999)
       expect(transaction.reload.from_value).to eq(BigDecimal('99999999.9999'))
     end
 
@@ -233,16 +235,16 @@ RSpec.describe Transaction, type: :model do
   end
 
   describe 'immutability' do
-    # Note: The before_update :prevent_updates callback might not exist yet
+    # NOTE: The before_update :prevent_updates callback might not exist yet
     # This tests the expected behavior for audit trail purposes
-    
+
     it 'can be created successfully' do
-      expect { create(:transaction) }.to change(Transaction, :count).by(1)
+      expect { create(:transaction) }.to change(described_class, :count).by(1)
     end
 
     it 'can be destroyed' do
       transaction = create(:transaction)
-      expect { transaction.destroy }.to change(Transaction, :count).by(-1)
+      expect { transaction.destroy }.to change(described_class, :count).by(-1)
     end
   end
 
@@ -250,24 +252,22 @@ RSpec.describe Transaction, type: :model do
     describe 'currency conversion calculations' do
       it 'correctly represents conversion from USD to BRL' do
         transaction = create(:transaction,
-          from_currency: 'USD',
-          to_currency: 'BRL',
-          from_value: 100,
-          rate: 5.25,
-          to_value: 525
-        )
+                             from_currency: 'USD',
+                             to_currency: 'BRL',
+                             from_value: 100,
+                             rate: 5.25,
+                             to_value: 525,)
 
         expect(transaction.from_value * transaction.rate).to eq(transaction.to_value)
       end
 
       it 'handles decimal precision in conversions' do
         transaction = create(:transaction,
-          from_currency: 'EUR',
-          to_currency: 'JPY',
-          from_value: 100.50,
-          rate: 150.1234,
-          to_value: 15087.4017
-        )
+                             from_currency: 'EUR',
+                             to_currency: 'JPY',
+                             from_value: 100.50,
+                             rate: 150.1234,
+                             to_value: 15_087.4017,)
 
         calculated_value = (transaction.from_value * transaction.rate).round(4)
         expect(calculated_value).to eq(transaction.to_value)
@@ -283,7 +283,7 @@ RSpec.describe Transaction, type: :model do
 
     it 'enforces foreign key constraint' do
       transaction = build(:transaction)
-      transaction.user_id = 999999 # Non-existent user
+      transaction.user_id = 999_999 # Non-existent user
       expect { transaction.save(validate: false) }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end
@@ -292,14 +292,14 @@ RSpec.describe Transaction, type: :model do
     let(:user) { create(:user) }
 
     it 'creates valid USD to BRL conversion' do
-      transaction = Transaction.create!(
+      transaction = described_class.create!(
         user: user,
         from_currency: 'USD',
         to_currency: 'BRL',
         from_value: 100,
         to_value: 525,
         rate: 5.25,
-        timestamp: Time.current
+        timestamp: Time.current,
       )
 
       expect(transaction).to be_persisted
@@ -308,28 +308,28 @@ RSpec.describe Transaction, type: :model do
     end
 
     it 'creates valid EUR to JPY conversion' do
-      transaction = Transaction.create!(
+      transaction = described_class.create!(
         user: user,
         from_currency: 'EUR',
         to_currency: 'JPY',
         from_value: 50,
         to_value: 7500,
         rate: 150,
-        timestamp: Time.current
+        timestamp: Time.current,
       )
 
       expect(transaction).to be_persisted
     end
 
     it 'creates valid BRL to USD conversion' do
-      transaction = Transaction.create!(
+      transaction = described_class.create!(
         user: user,
         from_currency: 'BRL',
         to_currency: 'USD',
         from_value: 525,
         to_value: 100,
         rate: 0.1905,
-        timestamp: Time.current
+        timestamp: Time.current,
       )
 
       expect(transaction).to be_persisted

@@ -14,6 +14,7 @@ module Api
       private
 
       def log_request
+        @request_started_at = Time.current
         Rails.logger.info({
           event: 'api_request',
           method: request.method,
@@ -24,7 +25,7 @@ module Api
           user_id: current_user&.id,
           request_id: request.uuid,
           remote_ip: request.remote_ip,
-          user_agent: request.user_agent
+          user_agent: request.user_agent,
         }.to_json)
       end
 
@@ -38,7 +39,7 @@ module Api
           status: response.status,
           user_id: current_user&.id,
           request_id: request.uuid,
-          duration_ms: calculate_duration
+          duration_ms: calculate_duration,
         }.to_json)
       end
 
@@ -47,14 +48,9 @@ module Api
       end
 
       def calculate_duration
-        if @request_started_at
-          ((Time.current - @request_started_at) * 1000).round(2)
-        end
-      end
+        return unless @request_started_at
 
-      def log_request
-        @request_started_at = Time.current
-        super
+        ((Time.current - @request_started_at) * 1000).round(2)
       end
     end
   end

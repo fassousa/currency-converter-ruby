@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TransactionSerializer
   def initialize(transaction)
     @transaction = transaction
@@ -11,7 +13,7 @@ class TransactionSerializer
       from_value: @transaction.from_value.to_s,
       to_value: @transaction.to_value.to_s,
       rate: @transaction.rate.to_s,
-      timestamp: @transaction.timestamp.iso8601
+      timestamp: @transaction.timestamp.iso8601,
     }
   end
 

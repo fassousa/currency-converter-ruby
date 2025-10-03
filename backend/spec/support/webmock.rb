@@ -7,7 +7,7 @@ WebMock.disable_net_connect!(allow_localhost: true)
 
 # Reset WebMock stubs after each test
 RSpec.configure do |config|
-  config.after(:each) do
+  config.after do
     WebMock.reset!
   end
 end

@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
-abort("The Rails environment is running in production mode!") if Rails.env.production?
+abort('The Rails environment is running in production mode!') if Rails.env.production?
 require 'rspec/rails'
 # Ensure external API keys are present in the test environment
 ENV['CURRENCY_API_KEY'] ||= 'test_currency_api_key'
@@ -22,7 +24,9 @@ ENV['CURRENCY_API_KEY'] ||= 'test_currency_api_key'
 # directory. Alternatively, in the individual `*_spec.rb` files, manually
 # require only the support files necessary.
 #
-Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
+Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each do |f|
+  require f
+end
 
 # Checks for pending migrations and applies them before tests are run.
 # If you are not using ActiveRecord, you can remove these lines.
@@ -34,11 +38,11 @@ end
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
-    Rails.root.join('spec/fixtures')
+    Rails.root.join('spec/fixtures'),
   ]
 
   # Clear cache before each test
-  config.before(:each) do
+  config.before do
     Rails.cache.clear
   end
 
@@ -69,20 +73,20 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
-  
+
   # Include FactoryBot methods
   config.include FactoryBot::Syntax::Methods
-  
+
   # Include Devise test helpers for request specs
   config.include Devise::Test::IntegrationHelpers, type: :request
-  
+
   # Bullet configuration for N+1 query detection
   if Bullet.enable?
-    config.before(:each) do
+    config.before do
       Bullet.start_request
     end
 
-    config.after(:each) do
+    config.after do
       Bullet.perform_out_of_channel_notifications if Bullet.notification?
       Bullet.end_request
     end

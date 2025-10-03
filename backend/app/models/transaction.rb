@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 class Transaction < ApplicationRecord
   belongs_to :user
 
   # Supported currencies
-  SUPPORTED_CURRENCIES = %w[BRL USD EUR JPY].freeze
+  SUPPORTED_CURRENCIES = ['BRL', 'USD', 'EUR', 'JPY'].freeze
 
   # Validations
   validates :from_currency, presence: true, inclusion: { in: SUPPORTED_CURRENCIES }
@@ -27,7 +29,7 @@ class Transaction < ApplicationRecord
   def different_currencies
     return unless from_currency && to_currency
 
-    errors.add(:to_currency, "must be different from source currency") if from_currency == to_currency
+    errors.add(:to_currency, 'must be different from source currency') if from_currency == to_currency
   end
 
   def set_timestamp

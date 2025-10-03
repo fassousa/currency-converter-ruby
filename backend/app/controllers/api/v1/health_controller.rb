@@ -13,7 +13,7 @@ module Api
           timestamp: Time.current.iso8601,
           version: Rails.application.config.version || '1.0.0',
           environment: Rails.env,
-          services: check_services
+          services: check_services,
         }
 
         render json: health_status, status: :ok
@@ -21,7 +21,7 @@ module Api
         render json: {
           status: 'unhealthy',
           timestamp: Time.current.iso8601,
-          error: e.message
+          error: e.message,
         }, status: :service_unavailable
       end
 
@@ -31,7 +31,7 @@ module Api
         {
           database: check_database,
           cache: check_cache,
-          external_api: check_external_api
+          external_api: check_external_api,
         }
       end
 
@@ -44,9 +44,9 @@ module Api
 
       def check_cache
         Rails.cache.write('health_check', Time.current.to_i)
-        value = Rails.cache.read('health_check')
+        Rails.cache.read('health_check')
         Rails.cache.delete('health_check')
-        
+
         { status: 'up', message: 'Cache is accessible' }
       rescue StandardError => e
         { status: 'down', message: e.message }
