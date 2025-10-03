@@ -8,6 +8,13 @@ plugins:
 require:
   - rubocop-rspec
 
+# Disable potentially problematic cops
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false
+
+RSpec/PredicateMatcher:
+  Enabled: false
+
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.3
