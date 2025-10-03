@@ -19,64 +19,15 @@ class ExchangeRateProvider # rubocop:disable Metrics/ClassLength
   # @return [BigDecimal] Exchange rate
   def fetch_rate(from:, to:)
     validate_currencies!(from, to)
-
-    # If same currency, rate is 1
     return BigDecimal('1.0') if from == to
 
-    # Try to fetch from cache first
+    # Try cache first
     cache_key = rate_cache_key(from, to)
-    cached_rate = Rails.cache.read(cache_key)
+    cached_rate = fetch_from_cache(cache_key)
+    return BigDecimal(cached_rate) if cached_rate
 
-    if cached_rate
-      ApiCallLogger.log_cache_hit(service: 'CurrencyAPI', cache_key: cache_key)
-      return BigDecimal(cached_rate)
-    end
-
-    ApiCallLogger.log_cache_miss(service: 'CurrencyAPI', cache_key: cache_key)
-
-    # Fetch from API and cache the result
-    start_time = Time.current
-    response = fetch_latest_rates(base_currency: from, currencies: [to])
-    duration_ms = (Time.current - start_time) * 1000
-
-    rate = parse_rate(response, from, to)
-    Rails.cache.write(cache_key, rate.to_s, expires_in: CACHE_EXPIRATION)
-
-    ApiCallLogger.log_response(
-      service: 'CurrencyAPI',
-      endpoint: '/latest',
-      status: 200,
-      duration_ms: duration_ms,
-      success: true,
-    )
-
-    rate
-  rescue Faraday::TimeoutError => e
-    ApiCallLogger.log_response(
-      service: 'CurrencyAPI',
-      endpoint: '/latest',
-      status: 0,
-      duration_ms: (Time.current - start_time) * 1000,
-      success: false,
-      error: e,
-    )
-    raise ExchangeRateUnavailableError.new(
-      message: "Currency exchange service timeout: #{e.message}",
-      details: { from: from, to: to, timeout: TIMEOUT_SECONDS },
-    )
-  rescue Faraday::Error => e
-    ApiCallLogger.log_response(
-      service: 'CurrencyAPI',
-      endpoint: '/latest',
-      status: 0,
-      duration_ms: (Time.current - start_time) * 1000,
-      success: false,
-      error: e,
-    )
-    raise ExchangeRateUnavailableError.new(
-      message: "Currency exchange service error: #{e.message}",
-      details: { from: from, to: to },
-    )
+    # Fetch from API and cache
+    fetch_and_cache_rate(from, to, cache_key)
   end
 
   # Fetch multiple exchange rates at once
@@ -89,15 +40,9 @@ class ExchangeRateProvider # rubocop:disable Metrics/ClassLength
     response = fetch_latest_rates(base_currency: from, currencies: to_currencies)
     parse_multiple_rates(response, from, to_currencies)
   rescue Faraday::TimeoutError => e
-    raise ExchangeRateUnavailableError.new(
-      message: "Currency exchange service timeout: #{e.message}",
-      details: { from: from, to_currencies: to_currencies, timeout: TIMEOUT_SECONDS },
-    )
+    handle_api_error(e, from, to_currencies, 'timeout')
   rescue Faraday::Error => e
-    raise ExchangeRateUnavailableError.new(
-      message: "Currency exchange service error: #{e.message}",
-      details: { from: from, to_currencies: to_currencies },
-    )
+    handle_api_error(e, from, to_currencies, 'connection')
   end
 
   private
@@ -203,5 +148,66 @@ class ExchangeRateProvider # rubocop:disable Metrics/ClassLength
 
   def rate_cache_key(from, to)
     "exchange_rate:#{from}:#{to}:#{Date.current.strftime('%Y-%m-%d')}"
+  end
+
+  def fetch_from_cache(cache_key)
+    cached = Rails.cache.read(cache_key)
+    ApiCallLogger.log_cache_hit(service: 'CurrencyAPI', cache_key: cache_key) if cached
+    ApiCallLogger.log_cache_miss(service: 'CurrencyAPI', cache_key: cache_key) unless cached
+    cached
+  end
+
+  def fetch_and_cache_rate(from, to, cache_key)
+    start_time = Time.current
+    response = fetch_latest_rates(base_currency: from, currencies: [to])
+    duration_ms = (Time.current - start_time) * 1000
+
+    rate = parse_rate(response, from, to)
+    Rails.cache.write(cache_key, rate.to_s, expires_in: CACHE_EXPIRATION)
+
+    ApiCallLogger.log_response(
+      service: 'CurrencyAPI',
+      endpoint: '/latest',
+      status: 200,
+      duration_ms: duration_ms,
+      success: true,
+    )
+
+    rate
+  rescue Faraday::TimeoutError => e
+    log_and_raise_error(e, start_time, from, to, 'timeout')
+  rescue Faraday::Error => e
+    log_and_raise_error(e, start_time, from, to, 'connection')
+  end
+
+  def log_and_raise_error(error, start_time, from, to, error_type)
+    ApiCallLogger.log_response(
+      service: 'CurrencyAPI',
+      endpoint: '/latest',
+      status: 0,
+      duration_ms: (Time.current - start_time) * 1000,
+      success: false,
+      error: error,
+    )
+
+    details = { from: from, to: to }
+    details[:timeout] = TIMEOUT_SECONDS if error_type == 'timeout'
+
+    message_prefix = error_type == 'timeout' ? 'timeout' : 'error'
+
+    raise ExchangeRateUnavailableError.new(
+      message: "Currency exchange service #{message_prefix}: #{error.message}",
+      details: details,
+    )
+  end
+
+  def handle_api_error(error, from, to_currencies, error_type)
+    details = { from: from, to_currencies: to_currencies }
+    details[:timeout] = TIMEOUT_SECONDS if error_type == 'timeout'
+
+    raise ExchangeRateUnavailableError.new(
+      message: "Currency exchange service #{error_type}: #{error.message}",
+      details: details,
+    )
   end
 end
