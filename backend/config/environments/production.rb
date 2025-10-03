@@ -58,7 +58,12 @@ Rails.application.configure do
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # Use a different cache store in production.
-  # config.cache_store = :mem_cache_store
+  # Redis cache store for production
+  config.cache_store = :redis_cache_store, {
+    url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'),
+    namespace: 'currency_converter_cache',
+    expires_in: 24.hours
+  }
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
   # config.active_job.queue_adapter = :resque
@@ -76,6 +81,11 @@ Rails.application.configure do
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
+
+  # Use JSON logging in production for easier parsing
+  config.log_formatter = ::Logger::Formatter.new
+  config.logger = ActiveSupport::Logger.new(STDOUT)
+  config.log_level = :info
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
