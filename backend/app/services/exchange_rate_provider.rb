@@ -11,13 +11,14 @@ class ExchangeRateProvider
   BASE_URL = 'https://api.currencyapi.com/v3'
   TIMEOUT_SECONDS = 10
   MAX_RETRIES = 3
+  CACHE_EXPIRATION = 24.hours # Cache rates for 24 hours
 
   def initialize(api_key: nil)
     @api_key = api_key || ENV.fetch('CURRENCY_API_KEY', nil)
     raise ArgumentError, 'CURRENCY_API_KEY is required' if @api_key.blank?
   end
 
-  # Fetch the latest exchange rate for a specific currency pair
+  # Fetch the latest exchange rate for a specific currency pair with caching
   # @param from [String] Source currency code (e.g., 'USD')
   # @param to [String] Target currency code (e.g., 'BRL')
   # @return [BigDecimal] Exchange rate
@@ -27,8 +28,16 @@ class ExchangeRateProvider
     # If same currency, rate is 1
     return BigDecimal('1.0') if from == to
 
+    # Try to fetch from cache first
+    cache_key = rate_cache_key(from, to)
+    cached_rate = Rails.cache.read(cache_key)
+    return BigDecimal(cached_rate) if cached_rate
+
+    # Fetch from API and cache the result
     response = fetch_latest_rates(base_currency: from, currencies: [to])
-    parse_rate(response, from, to)
+    rate = parse_rate(response, from, to)
+    Rails.cache.write(cache_key, rate.to_s, expires_in: CACHE_EXPIRATION)
+    rate
   rescue Faraday::TimeoutError => e
     raise TimeoutError, "CurrencyAPI timeout: #{e.message}"
   rescue Faraday::Error => e
@@ -132,5 +141,9 @@ class ExchangeRateProvider
         raise InvalidCurrencyError, "Unsupported currency: #{currency}. Valid currencies: #{valid_currencies.join(', ')}"
       end
     end
+  end
+
+  def rate_cache_key(from, to)
+    "exchange_rate:#{from}:#{to}:#{Date.current.strftime('%Y-%m-%d')}"
   end
 end

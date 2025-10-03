@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_09_30_220000) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_03_022855) do
   create_table "transactions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "from_currency", null: false
@@ -21,8 +21,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_30_220000) do
     t.datetime "timestamp", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["from_currency", "to_currency"], name: "index_transactions_on_currency_pair"
     t.index ["from_currency", "to_currency"], name: "index_transactions_on_from_currency_and_to_currency"
     t.index ["timestamp"], name: "index_transactions_on_timestamp"
+    t.index ["user_id", "timestamp"], name: "index_transactions_on_user_and_timestamp"
     t.index ["user_id"], name: "index_transactions_on_user_id"
   end
 

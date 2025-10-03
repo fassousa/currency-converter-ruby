@@ -274,6 +274,10 @@ GEM
     rdoc (6.14.2)
       erb
       psych (>= 4.0.0)
+    redis (5.4.1)
+      redis-client (>= 0.22.0)
+    redis-client (0.26.1)
+      connection_pool
     reline (0.6.2)
       io-console (~> 0.5)
     responders (3.1.1)
@@ -367,6 +371,7 @@ DEPENDENCIES
   rack-attack
   rack-cors
   rails (~> 7.1.5, >= 7.1.5.2)
+  redis (~> 5.0)
   rspec-rails (~> 6.0)
   shoulda-matchers (~> 5.3)
   simplecov (~> 0.22)
