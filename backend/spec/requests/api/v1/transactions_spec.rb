@@ -1,20 +1,22 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-RSpec.describe 'Api::V1::Transactions', type: :request do
+RSpec.describe 'Api::V1::Transactions' do
   let(:user) { create(:user) }
   let(:auth_token) do
     post '/api/v1/auth/sign_in', params: { user: { email: user.email, password: user.password } }, as: :json
     response.headers['Authorization']
   end
   let(:auth_headers) { { 'Authorization' => auth_token } }
-  let(:json_response) { JSON.parse(response.body) }
-  let(:expected_fields) { %w[id from_currency to_currency from_value to_value rate timestamp] }
+  let(:json_response) { response.parsed_body }
+  let(:expected_fields) { ['id', 'from_currency', 'to_currency', 'from_value', 'to_value', 'rate', 'timestamp'] }
 
   before do
     stub_request(:get, /api.currencyapi.com/).to_return(
       status: 200,
       body: { data: { 'BRL' => { code: 'BRL', value: 5.25 } } }.to_json,
-      headers: { 'Content-Type' => 'application/json' }
+      headers: { 'Content-Type' => 'application/json' },
     )
   end
 
@@ -37,7 +39,7 @@ RSpec.describe 'Api::V1::Transactions', type: :request do
       it 'returns transactions ordered by timestamp descending' do
         get '/api/v1/transactions', headers: auth_headers
 
-        timestamps = json_response['transactions'].map { |t| Time.parse(t['timestamp']) }
+        timestamps = json_response['transactions'].map { |t| Time.zone.parse(t['timestamp']) }
         expect(timestamps).to eq(timestamps.sort.reverse)
       end
 
@@ -60,7 +62,7 @@ RSpec.describe 'Api::V1::Transactions', type: :request do
       it 'enforces maximum limit of 100 per page' do
         create_list(:transaction, 120, user: user)
         get '/api/v1/transactions', params: { per_page: 200 }, headers: auth_headers
-        
+
         expect(json_response['transactions'].size).to eq(100)
       end
     end
@@ -96,13 +98,13 @@ RSpec.describe 'Api::V1::Transactions', type: :request do
         shared_examples 'rejects invalid params' do |params_change|
           it "rejects #{params_change.keys.first}" do
             invalid_params = params_change[:merge] ? valid_params.merge(params_change[:merge]) : valid_params.except(*params_change[:except])
-            
+
             expect {
               post '/api/v1/transactions', params: invalid_params, headers: auth_headers
             }.not_to change(Transaction, :count)
-            
+
             expect(response).to have_http_status(:unprocessable_entity)
-            expect(json_response['errors']).to be_present
+            expect(json_response['error']).to be_present
           end
         end
 
@@ -115,15 +117,17 @@ RSpec.describe 'Api::V1::Transactions', type: :request do
       end
 
       context 'when API fails' do
-        before { stub_request(:get, /api.currencyapi.com/).to_return(status: 500) }
+        before do
+          stub_request(:get, /api.currencyapi.com/).to_return(status: 500)
+        end
 
         it 'returns error and does not create transaction' do
           expect {
             post '/api/v1/transactions', params: valid_params, headers: auth_headers
           }.not_to change(Transaction, :count)
 
-          expect(response).to have_http_status(:unprocessable_entity)
-          expect(json_response['errors']).to be_present
+          expect(response).to have_http_status(:service_unavailable)
+          expect(json_response['error']).to be_present
         end
       end
     end
