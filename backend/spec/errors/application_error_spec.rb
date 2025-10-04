@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe ApplicationError do
   describe '#initialize' do
-    it 'uses defaults and accepts custom values' do
+    it 'uses defaults and accepts custom values' do # rubocop:disable RSpec/MultipleExpectations
       error = described_class.new
       expect(error.message).to eq('An error occurred')
       expect(error.status).to eq(:internal_server_error)

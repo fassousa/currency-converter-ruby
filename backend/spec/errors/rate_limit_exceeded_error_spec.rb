@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe RateLimitExceededError do
-  it 'has correct defaults and handles retry_after' do
+  it 'has correct defaults and handles retry_after' do # rubocop:disable RSpec/MultipleExpectations
     error = described_class.new
     expect(error.message).to eq('API rate limit exceeded. Please try again later.')
     expect(error.status).to eq(:too_many_requests)
