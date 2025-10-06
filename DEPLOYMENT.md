@@ -1,5 +1,7 @@
 # Deployment Guide
 
+> 🌍 **Language:** **English** | [Português](DEPLOYMENT.pt-BR.md)
+
 The Currency Converter API is deployed to Digital Ocean with automated CI/CD via GitHub Actions.
 
 ## Live Environment
