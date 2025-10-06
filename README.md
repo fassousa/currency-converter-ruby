@@ -1,5 +1,7 @@
 # Currency Converter API 💱
 
+> 🌍 **Language:** **English** | [Português](README.pt-BR.md)
+
 > **Senior Ruby on Rails Developer - Technical Assessment for Jaya Tech**
 
 Production-ready Rails API for real-time currency conversion with JWT authentication, complete test coverage, and automated CI/CD deployment.
