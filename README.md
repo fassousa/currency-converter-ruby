@@ -2,7 +2,7 @@
 
 Production-ready Rails API for real-time currency conversion with JWT authentication.
 
-🌐 **Live:** http://161.35.142.103 | 📚 **Docs:** http://161.35.142.103/api-docs | ✅ **Tests:** 190 passing (79% coverage)
+🌐 **Live:** https://currencyconverter.duckdns.org | 📚 **Docs:** https://currencyconverter.duckdns.org/api-docs | ✅ **Tests:** 190 passing (79% coverage)
 
 ## Quick Start
 
@@ -20,21 +20,21 @@ rails server
 
 **Register:**
 ```bash
-curl -X POST http://161.35.142.103/api/v1/auth \
+curl -X POST https://currencyconverter.duckdns.org/api/v1/auth \
   -H "Content-Type: application/json" \
   -d '{"user":{"email":"user@example.com","password":"Pass123!","password_confirmation":"Pass123!"}}'
 ```
 
 **Login (get token):**
 ```bash
-curl -i -X POST http://161.35.142.103/api/v1/auth/sign_in \
+curl -i -X POST https://currencyconverter.duckdns.org/api/v1/auth/sign_in \
   -H "Content-Type: application/json" \
   -d '{"user":{"email":"user@example.com","password":"Pass123!"}}'
 ```
 
 **Convert Currency:**
 ```bash
-curl -X POST http://161.35.142.103/api/v1/transactions \
+curl -X POST https://currencyconverter.duckdns.org/api/v1/transactions \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"from_currency":"USD","to_currency":"EUR","from_value":"100.00"}'
@@ -80,7 +80,7 @@ bundle exec brakeman           # Security scan
 - 📖 [Development Guide](DEVELOPMENT.md) - Setup & workflows
 - 📖 [API Reference](backend/API_DOCUMENTATION.md) - Endpoints
 - 📖 [Deployment](DEPLOYMENT.md) - Production setup
-- 📖 [Swagger UI](http://161.35.142.103/api-docs) - Interactive docs
+- 📖 [Swagger UI](https://currencyconverter.duckdns.org/api-docs) - Interactive docs
 
 ## Technical Challenge ✅
 

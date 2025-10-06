@@ -4,10 +4,11 @@ The Currency Converter API is deployed to Digital Ocean with automated CI/CD via
 
 ## Live Environment
 
-- **URL:** http://161.35.142.103
-- **API Docs:** http://161.35.142.103/api-docs  
+- **URL:** https://currencyconverter.duckdns.org
+- **API Docs:** https://currencyconverter.duckdns.org/api-docs  
 - **Platform:** Digital Ocean Droplet (Ubuntu 22.04)
 - **Stack:** Nginx + Puma + PostgreSQL + Redis
+- **SSL:** Let's Encrypt (auto-renewing)
 
 ## Automated Deployment
 
@@ -28,6 +29,42 @@ bundle install
 RAILS_ENV=production rails db:migrate
 sudo systemctl restart puma
 ```
+
+## HTTPS Setup
+
+The application is secured with HTTPS using a free SSL certificate from Let's Encrypt.
+
+### Initial Setup Steps
+
+1. **Domain Configuration:**
+   - Free domain from DuckDNS: `currencyconverter.duckdns.org`
+   - Pointed to server IP: `161.35.142.103`
+
+2. **Certbot Installation:**
+   ```bash
+   sudo apt update
+   sudo apt install certbot python3-certbot-nginx -y
+   ```
+
+3. **Nginx Configuration:**
+   - Updated `server_name` in `/etc/nginx/sites-available/currency-converter`
+   - Changed from IP to domain: `currencyconverter.duckdns.org`
+
+4. **SSL Certificate Generation:**
+   ```bash
+   sudo certbot --nginx -d currencyconverter.duckdns.org
+   ```
+   
+   Certbot automatically:
+   - Obtains SSL certificate from Let's Encrypt
+   - Configures Nginx for HTTPS
+   - Sets up HTTP to HTTPS redirect
+   - Configures auto-renewal
+
+5. **Verification:**
+   ```bash
+   curl https://currencyconverter.duckdns.org/api-docs
+   ```
 
 ## Environment Configuration
 
@@ -51,7 +88,7 @@ SECRET_KEY_BASE=your_secret_key_base
 ## Health Check
 
 ```bash
-curl http://161.35.142.103/api/v1/health
+curl https://currencyconverter.duckdns.org/api/v1/health
 ```
 
 Expected:
@@ -79,7 +116,30 @@ Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
 - ✅ CORS configured  
 - ✅ Security headers
 - ✅ Automated vulnerability scanning
-- ✅ HTTPS ready (currently HTTP for demo)
+- ✅ HTTPS with Let's Encrypt SSL
+- ✅ Auto-renewing SSL certificates
+
+## SSL Certificate Management
+
+The SSL certificate is managed by Let's Encrypt and automatically renews every 90 days.
+
+**Certificate Details:**
+- Domain: currencyconverter.duckdns.org
+- Provider: Let's Encrypt
+- Location: `/etc/letsencrypt/live/currencyconverter.duckdns.org/`
+- Auto-renewal: Configured via Certbot
+
+**Manual SSL Renewal (if needed):**
+```bash
+ssh deploy@161.35.142.103
+sudo certbot renew
+sudo systemctl reload nginx
+```
+
+**Test Auto-renewal:**
+```bash
+sudo certbot renew --dry-run
+```
 
 ## Monitoring
 

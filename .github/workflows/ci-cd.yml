@@ -123,7 +123,7 @@ jobs:
     
     environment:
       name: production
-      url: http://161.35.142.103
+      url: https://currencyconverter.duckdns.org
 
     steps:
       - name: Checkout code
@@ -211,7 +211,7 @@ jobs:
         if: success()
         run: |
           echo "🎉 Deployment to production successful!"
-          echo "Application is now live at http://161.35.142.103"
+          echo "Application is now live at https://currencyconverter.duckdns.org"
 
       - name: Notify on failure
         if: failure()
