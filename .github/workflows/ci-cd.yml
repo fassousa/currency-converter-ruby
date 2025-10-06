@@ -166,7 +166,7 @@ jobs:
             echo "🏥 Health check..."
             for i in {1..5}; do
               RESPONSE=$(curl -sf -H "Content-Type: application/json" -H "Accept: application/json" \
-                -k https://currencyconverter.duckdns.org/api/v1/health\)
+                -k https://currencyconverter.duckdns.org/api/v1/health)
               
               if echo "$RESPONSE" | grep -q "healthy"; then
                 echo "✅ Deployment successful! ($RESPONSE)"
