@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  RUBY_VERSION: '3.3.5'
+  BACKEND_DIR: backend
+
 jobs:
   test:
     name: Test & Lint
@@ -43,42 +47,33 @@ jobs:
       CURRENCY_API_KEY: test_api_key_for_ci
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.5'
+          ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
-          working-directory: backend
-
-      - name: Install dependencies
-        run: |
-          cd backend
-          bundle install --jobs 4 --retry 3
+          working-directory: ${{ env.BACKEND_DIR }}
 
       - name: Setup database
-        run: |
-          cd backend
-          bin/rails db:create db:schema:load
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bin/rails db:create db:schema:load
 
       - name: Run RuboCop
-        run: |
-          cd backend
-          bundle exec rubocop --parallel
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bundle exec rubocop --parallel
 
       - name: Run tests
-        run: |
-          cd backend
-          bundle exec rspec --format documentation
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bundle exec rspec --format documentation
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
-          path: backend/coverage/
+          path: ${{ env.BACKEND_DIR }}/coverage/
           retention-days: 7
 
   security:
@@ -87,29 +82,22 @@ jobs:
     needs: test
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.5'
+          ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
-          working-directory: backend
+          working-directory: ${{ env.BACKEND_DIR }}
 
-      - name: Install dependencies
-        run: |
-          cd backend
-          bundle install --jobs 4 --retry 3
-
-      - name: Run Brakeman security scanner
-        run: |
-          cd backend
-          bundle exec brakeman --no-pager --format plain
+      - name: Run Brakeman
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: bundle exec brakeman --no-pager --format plain
 
       - name: Run bundler-audit
+        working-directory: ${{ env.BACKEND_DIR }}
         run: |
-          cd backend
           gem install bundler-audit
           bundle audit check --update
 
@@ -117,8 +105,6 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [test, security]
-    
-    # Only deploy on push to main branch (not on PRs)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     environment:
@@ -126,8 +112,7 @@ jobs:
       url: https://currencyconverter.duckdns.org
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Deploy to Digital Ocean
         uses: appleboy/ssh-action@v1.0.0
@@ -136,97 +121,77 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            # Switch to rails user and deploy
+            # Deploy as rails user
             su - rails << 'RAILSEOF'
-            
-            # Navigate to application directory
             cd currency-converter-ruby/backend
             
-            # Store current git commit for rollback
-            CURRENT_COMMIT=$(git rev-parse HEAD)
-            echo "📌 Current commit: $CURRENT_COMMIT"
-            echo "$CURRENT_COMMIT" > /tmp/pre-deploy-commit.txt
+            # Save current commit for rollback
+            git rev-parse HEAD > /tmp/pre-deploy-commit.txt
+            echo "📌 Current: $(cat /tmp/pre-deploy-commit.txt)"
             
-            # Pull latest changes
-            echo "📥 Pulling latest changes from main..."
+            # Update code
+            echo "📥 Updating code..."
             git fetch origin
+            git diff-index --quiet HEAD -- || git stash
             git checkout main
-            git pull origin main
+            git reset --hard origin/main
+            echo "📌 New: $(git rev-parse HEAD)"
             
-            NEW_COMMIT=$(git rev-parse HEAD)
-            echo "📌 New commit: $NEW_COMMIT"
-            
-            # Load environment variables
-            export $(grep -v "^#" .env.production | grep -v "^$" | xargs)
-            
-            # Install dependencies
+            # Deploy
             echo "📦 Installing dependencies..."
+            export $(grep -v "^#" .env.production | grep -v "^$" | xargs)
             RAILS_ENV=production bundle install --without development test --jobs 4 --retry 3
             
-            # Run database migrations
-            echo "🗄️  Running database migrations..."
+            echo "🗄️  Running migrations..."
             RAILS_ENV=production bundle exec rails db:migrate
             
-            # Precompile assets (if needed in future)
-            # echo "🎨 Precompiling assets..."
-            # RAILS_ENV=production bundle exec rails assets:precompile
-            
-            echo "✅ Rails deployment steps completed"
-            
+            echo "✅ Rails deployment completed"
             RAILSEOF
             
-            # Restart Puma service (as root)
-            echo "🔄 Restarting Puma service..."
-            systemctl restart puma
+            # Verify and restart
+            SOCKET="/home/rails/currency-converter-ruby/backend/tmp/sockets/puma.sock"
+            NGINX_CONF="/etc/nginx/sites-available/currency-converter"
             
-            # Wait for Puma to start
-            echo "⏳ Waiting for Puma to start..."
-            sleep 5
+            echo "🔍 Verifying Nginx configuration..."
+            grep -q "unix://$SOCKET" "$NGINX_CONF" || {
+              sed -i "s|unix://.*puma.sock|unix://$SOCKET|g" "$NGINX_CONF"
+              nginx -t && systemctl reload nginx
+            }
+            
+            echo "🔄 Restarting Puma..."
+            systemctl restart puma
+            sleep 8
             
             # Health check
-            echo "🏥 Running health check..."
-            HEALTH_RESPONSE=$(curl -s -H "Content-Type: application/json" -H "Accept: application/json" http://localhost/api/v1/health)
+            echo "🏥 Health check..."
+            for i in {1..5}; do
+              RESPONSE=$(curl -sf -H "Content-Type: application/json" -H "Accept: application/json" \
+                -k https://currencyconverter.duckdns.org/api/v1/health\)
+              
+              if echo "$RESPONSE" | grep -q "healthy"; then
+                echo "✅ Deployment successful! ($RESPONSE)"
+                exit 0
+              fi
+              
+              [ $i -lt 5 ] && { echo "⚠️  Retry $i/5..."; sleep 3; }
+            done
             
-            if echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
-              echo "✅ Health check passed!"
-              echo "$HEALTH_RESPONSE"
-            else
-              echo "❌ Health check failed!"
-              echo "$HEALTH_RESPONSE"
-              exit 1
-            fi
-            
-            # Check Puma status
-            systemctl status puma --no-pager
+            echo "❌ Health check failed!"
+            journalctl -u puma -n 20 --no-pager
+            exit 1
 
-      - name: Create deployment record
+      - name: Deployment summary
         if: success()
         run: |
-          echo "📝 Creating deployment record..."
-          echo "Deployed commit: ${{ github.sha }}"
-          echo "Deployed by: ${{ github.actor }}"
-          echo "Deployed at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "🎉 Deployed to https://currencyconverter.duckdns.org"
+          echo "�� Commit: ${{ github.sha }}"
+          echo "👤 By: ${{ github.actor }}"
 
-      - name: Notify on success
-        if: success()
-        run: |
-          echo "🎉 Deployment to production successful!"
-          echo "Application is now live at https://currencyconverter.duckdns.org"
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "❌ Deployment failed!"
-          echo "Please check the logs and consider rolling back if necessary."
-
-  # Optional: Rollback job that can be triggered manually
   rollback:
-    name: Rollback Deployment
+    name: Rollback
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
-    
-    environment:
-      name: production
+    environment: production
 
     steps:
       - name: Rollback to previous commit
@@ -239,21 +204,18 @@ jobs:
             su - rails << 'EOF'
             cd currency-converter-ruby/backend
             
-            if [ -f /tmp/pre-deploy-commit.txt ]; then
-              PREVIOUS_COMMIT=$(cat /tmp/pre-deploy-commit.txt)
-              echo "🔄 Rolling back to commit: $PREVIOUS_COMMIT"
-              git checkout $PREVIOUS_COMMIT
-              
-              export $(grep -v "^#" .env.production | grep -v "^$" | xargs)
-              RAILS_ENV=production bundle install --without development test
-              RAILS_ENV=production bundle exec rails db:migrate
-            else
-              echo "❌ No previous commit found!"
-              exit 1
-            fi
+            [ ! -f /tmp/pre-deploy-commit.txt ] && { echo "❌ No rollback point!"; exit 1; }
+            
+            PREV=$(cat /tmp/pre-deploy-commit.txt)
+            echo "🔄 Rolling back to: $PREV"
+            git checkout $PREV
+            
+            export $(grep -v "^#" .env.production | grep -v "^$" | xargs)
+            RAILS_ENV=production bundle install --without development test
+            RAILS_ENV=production bundle exec rails db:migrate
             EOF
             
             systemctl restart puma
             sleep 5
-            
-            curl -f -H "Content-Type: application/json" http://localhost/api/v1/health
+            curl -sf -H "Content-Type: application/json" -H "Accept: application/json" \
+              -k https://currencyconverter.duckdns.org/api/v1/health
