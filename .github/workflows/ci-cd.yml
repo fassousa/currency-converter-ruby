@@ -147,9 +147,16 @@ jobs:
             echo "📌 Current commit: $CURRENT_COMMIT"
             echo "$CURRENT_COMMIT" > /tmp/pre-deploy-commit.txt
             
-            # Pull latest changes
+            # Pull latest changes (stash any local changes first)
             echo "📥 Pulling latest changes from main..."
             git fetch origin
+            
+            # Stash any local changes to avoid conflicts
+            if ! git diff-index --quiet HEAD --; then
+              echo "⚠️  Local changes detected, stashing..."
+              git stash
+            fi
+            
             git checkout main
             git pull origin main
             
@@ -181,23 +188,38 @@ jobs:
             
             # Wait for Puma to start
             echo "⏳ Waiting for Puma to start..."
-            sleep 5
+            sleep 8
             
-            # Health check
+            # Check Puma status first
+            echo "🔍 Checking Puma status..."
+            systemctl status puma --no-pager || true
+            
+            # Health check with better error handling
             echo "🏥 Running health check..."
-            HEALTH_RESPONSE=$(curl -s -H "Content-Type: application/json" -H "Accept: application/json" http://localhost/api/v1/health)
+            for i in {1..5}; do
+              HEALTH_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" http://localhost/api/v1/health || echo "CONNECTION_FAILED")
+              
+              if echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
+                echo "✅ Health check passed on attempt $i!"
+                echo "$HEALTH_RESPONSE"
+                exit 0
+              else
+                echo "⚠️  Attempt $i failed, response: $HEALTH_RESPONSE"
+                if [ $i -lt 5 ]; then
+                  echo "Waiting 3 seconds before retry..."
+                  sleep 3
+                fi
+              fi
+            done
             
-            if echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
-              echo "✅ Health check passed!"
-              echo "$HEALTH_RESPONSE"
-            else
-              echo "❌ Health check failed!"
-              echo "$HEALTH_RESPONSE"
-              exit 1
-            fi
+            echo "❌ Health check failed after 5 attempts!"
+            echo "Last response: $HEALTH_RESPONSE"
             
-            # Check Puma status
-            systemctl status puma --no-pager
+            # Show Puma logs for debugging
+            echo "📋 Recent Puma logs:"
+            journalctl -u puma -n 50 --no-pager
+            
+            exit 1
 
       - name: Create deployment record
         if: success()
