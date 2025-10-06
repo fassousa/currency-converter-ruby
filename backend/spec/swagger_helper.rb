@@ -34,13 +34,8 @@ RSpec.configure do |config|
           description: 'Development server',
         },
         {
-          url: 'https://{defaultHost}',
+          url: 'https://currencyconverter.duckdns.org',
           description: 'Production server',
-          variables: {
-            defaultHost: {
-              default: 'api.currencyconverter.com',
-            },
-          },
         },
       ],
       components: {
