@@ -109,113 +109,43 @@ jobs:
     
     environment:
       name: production
-      url: https://currencyconverter.duckdns.org
+      url: https://currency-converter-ruby.fly.dev
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Digital Ocean
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            # Deploy as rails user
-            su - rails << 'RAILSEOF'
-            cd currency-converter-ruby/backend
-            
-            # Save current commit for rollback
-            git rev-parse HEAD > /tmp/pre-deploy-commit.txt
-            echo "📌 Current: $(cat /tmp/pre-deploy-commit.txt)"
-            
-            # Update code
-            echo "📥 Updating code..."
-            git fetch origin
-            git diff-index --quiet HEAD -- || git stash
-            git checkout main
-            git reset --hard origin/main
-            echo "📌 New: $(git rev-parse HEAD)"
-            
-            # Deploy
-            echo "📦 Installing dependencies..."
-            export $(grep -v "^#" .env.production | grep -v "^$" | xargs)
-            RAILS_ENV=production bundle install --without development test --jobs 4 --retry 3
-            
-            echo "🗄️  Running migrations..."
-            RAILS_ENV=production bundle exec rails db:migrate
-            
-            echo "✅ Rails deployment completed"
-            RAILSEOF
-            
-            # Verify and restart
-            SOCKET="/home/rails/currency-converter-ruby/backend/tmp/sockets/puma.sock"
-            NGINX_CONF="/etc/nginx/sites-available/currency-converter"
-            
-            echo "🔍 Verifying Nginx configuration..."
-            grep -q "unix://$SOCKET" "$NGINX_CONF" || {
-              sed -i "s|unix://.*puma.sock|unix://$SOCKET|g" "$NGINX_CONF"
-              nginx -t && systemctl reload nginx
-            }
-            
-            echo "🔄 Restarting Puma..."
-            systemctl restart puma
-            sleep 8
-            
-            # Health check
-            echo "🏥 Health check..."
-            for i in {1..5}; do
-              RESPONSE=$(curl -sf -H "Content-Type: application/json" -H "Accept: application/json" \
-                -k https://currencyconverter.duckdns.org/api/v1/health)
-              
-              if echo "$RESPONSE" | grep -q "healthy"; then
-                echo "✅ Deployment successful! ($RESPONSE)"
-                exit 0
-              fi
-              
-              [ $i -lt 5 ] && { echo "⚠️  Retry $i/5..."; sleep 3; }
-            done
-            
-            echo "❌ Health check failed!"
-            journalctl -u puma -n 20 --no-pager
-            exit 1
+      - name: Setup Flyctl
+        if: env.FLY_API_TOKEN != ''
+        uses: superfly/flyctl-actions/setup-flyctl@master
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Deploy to Fly.io
+        if: env.FLY_API_TOKEN != ''
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Health Check
+        run: |
+          echo "🏥 Verifying production health check..."
+          for i in {1..5}; do
+            RESPONSE=$(curl -sf -H "Accept: application/json" https://currency-converter-ruby.fly.dev/api/v1/health || true)
+            if echo "$RESPONSE" | grep -q "healthy"; then
+              echo "✅ Production is healthy! ($RESPONSE)"
+              exit 0
+            fi
+            echo "⚠️ Retry $i/5..."
+            sleep 3
+          done
+          echo "❌ Health check failed!"
+          exit 1
 
       - name: Deployment summary
         if: success()
         run: |
-          echo "🎉 Deployed to https://currencyconverter.duckdns.org"
-          echo "�� Commit: ${{ github.sha }}"
+          echo "🎉 Verified at https://currency-converter-ruby.fly.dev"
+          echo "📌 Commit: ${{ github.sha }}"
           echo "👤 By: ${{ github.actor }}"
 
-  rollback:
-    name: Rollback
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    environment: production
-
-    steps:
-      - name: Rollback to previous commit
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            su - rails << 'EOF'
-            cd currency-converter-ruby/backend
-            
-            [ ! -f /tmp/pre-deploy-commit.txt ] && { echo "❌ No rollback point!"; exit 1; }
-            
-            PREV=$(cat /tmp/pre-deploy-commit.txt)
-            echo "🔄 Rolling back to: $PREV"
-            git checkout $PREV
-            
-            export $(grep -v "^#" .env.production | grep -v "^$" | xargs)
-            RAILS_ENV=production bundle install --without development test
-            RAILS_ENV=production bundle exec rails db:migrate
-            EOF
-            
-            systemctl restart puma
-            sleep 5
-            curl -sf -H "Content-Type: application/json" -H "Accept: application/json" \
-              -k https://currencyconverter.duckdns.org/api/v1/health
