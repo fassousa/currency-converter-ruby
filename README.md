@@ -2,26 +2,26 @@
 
 > 🌍 **Language:** **English** | [Português](README.pt-BR.md)
 
-> **Senior Ruby on Rails Developer - Technical Assessment for Jaya Tech**
+> **Senior Ruby on Rails Developer Showcase Project**
+>
+> A production-ready Rails 7.1 API for real-time currency conversion with JWT authentication, comprehensive test coverage (TDD), and cloud deployment featuring automated Scale-to-Zero orchestration.
 
-Production-ready Rails API for real-time currency conversion with JWT authentication, complete test coverage, and automated CI/CD deployment.
-
-🌐 **Live:** https://currency-converter-ruby.fly.dev | 📚 **API Docs:** https://currency-converter-ruby.fly.dev/api-docs | ✅ **190 tests passing** (79% coverage)
+🌐 **Live Application:** https://currency-converter-ruby.fly.dev | 📚 **Interactive API Docs:** https://currency-converter-ruby.fly.dev/api-docs | ✅ **190 tests passing** (79% coverage)
 
 ---
 
-## ✅ Assessment Requirements Met
+## 🌟 Technical Highlights & Engineering Standards
 
-| Requirement | Implementation | Evidence |
-|------------|----------------|----------|
-| **Rails 7.1+** | ✅ Rails 7.1.5 | [Gemfile](backend/Gemfile) |
-| **PostgreSQL** | ✅ Production DB | [database.yml](backend/config/database.yml) |
-| **Redis** | ✅ Cache & Sidekiq ready | [redis.rb](backend/config/initializers/redis.rb) |
-| **RSpec Tests** | ✅ 190 tests, 79% coverage | `bundle exec rspec` |
-| **CI/CD** | ✅ GitHub Actions | [.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml) |
-| **Git & Agile** | ✅ PRs, conventional commits | [Commit history](https://github.com/fassousa/currency-converter-ruby/commits/main) |
-
-**Bonus:** Docker ✅ | Security Scans (Brakeman) ✅ | API Documentation (Swagger) ✅ | Production Deployment ✅ | HTTPS/SSL ✅
+| Dimension | Architecture & Implementation | Evidence / Code |
+| :--- | :--- | :--- |
+| **Clean Rails 7.1 Architecture** | API-only mode, Bootsnap optimization, Puma web server, and Service Objects pattern isolating business logic | [Gemfile](backend/Gemfile) • [Services](backend/app/services/) |
+| **Relational Database** | Managed PostgreSQL (Supabase) via Supavisor Transaction Pooler, SSL encryption, and auto-migrations on deploy | [database.yml](backend/config/database.yml) • [Schema](backend/db/schema.rb) |
+| **Resilient Caching Strategy** | Fault-tolerant 24h caching for exchange rates with graceful fallback from Redis to memory store | [ExchangeRateProvider](backend/app/services/exchange_rate_provider.rb) • [redis.rb](backend/config/initializers/redis.rb) |
+| **Test-Driven Development (TDD)** | 190+ specs (Request, Service, Model, Serializer) with 79% code coverage via RSpec & FactoryBot | `bundle exec rspec` • [spec/](backend/spec/) |
+| **Cloud Native & DevOps** | Multi-stage Docker container deployed to **Fly.io** with automated **Scale-to-Zero** architecture | [Dockerfile](backend/Dockerfile) • [fly.toml](backend/fly.toml) |
+| **Defense-in-Depth Security** | Devise JWT stateless authentication, Rack::Attack rate limiting, Brakeman static analysis & Bundler Audit | [rack_attack.rb](backend/config/initializers/rack_attack.rb) • [Devise](backend/config/initializers/devise.rb) |
+| **Observability & Reliability** | JSON-structured logging via Lograge, dual health-check probes (`/up` & `/api/v1/health`), strict RuboCop linting | [HealthController](backend/app/controllers/api/v1/health_controller.rb) • [.rubocop.yml](backend/.rubocop.yml) |
+| **Interactive API Spec** | OpenAPI 3.0 specification with live Swagger UI allowing interactive browser testing | [Swagger UI](https://currency-converter-ruby.fly.dev/api-docs) • [swagger.yaml](backend/swagger/v1/swagger.yaml) |
 
 ---
 
@@ -118,20 +118,20 @@ open coverage/index.html       # View test coverage report
 
 ---
 
-## 🌟 Why This Implementation?
+## 🏛️ Engineering Philosophy & Best Practices
 
-**For Jaya Tech's "Conscious Software Engineering":**
+This microservice reflects senior-level conscious software engineering principles:
 
-1. **Data-Driven Decisions:** Comprehensive test coverage and monitoring provide confidence
-2. **Healthy Relationships:** Clean architecture enables team collaboration
-3. **Impact Understanding:** Documentation explains *why*, not just *what*
-4. **Self-Awareness:** Each commit follows conventions, tests validate assumptions
+1. **Data-Driven Decisions:** Comprehensive test coverage (79%), structured performance logging, and explicit health monitoring ensure measurable reliability.
+2. **Clean System Relationships:** Clear boundaries between controllers, service objects, serializers, and external API gateways foster long-term maintainability.
+3. **Impact & Intent Understanding:** Thorough architectural documentation and clean git history explain *why* technical decisions were made, not just *what* code was written.
+4. **Continuous Quality & Awareness:** Automated CI/CD pipelines validate linters, vulnerability scanners, and full test suites before any code touches production.
 
-**Production-Ready Features:**
-- Deployed with CI/CD, not just "works on my machine"
-- Security scans in pipeline, not post-deployment surprises
-- Real SSL certificate, not self-signed placeholders
-- Structured logging for debugging, not `puts` statements
+**Production-Grade Capabilities:**
+- Cloud-native deployment with automated Scale-to-Zero (cost-effective and efficient)
+- Automated vulnerability scanning integrated into CI/CD
+- Encrypted SSL/TLS traffic termination via Fly Proxy
+- Structured JSON logging (Lograge) optimized for centralized log aggregators
 
 ---
 

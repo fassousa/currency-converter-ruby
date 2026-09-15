@@ -2,26 +2,26 @@
 
 > 🌍 **Idioma:** [English](README.md) | **Português**
 
-> **Desenvolvedor Ruby on Rails Sênior - Avaliação Técnica para Jaya Tech**
+> **Projeto de Portfólio - Desenvolvedor Ruby on Rails Sênior**
+>
+> API Rails 7.1 pronta para produção para conversão de moedas em tempo real com autenticação JWT, cobertura abrangente de testes (TDD) e deployment em nuvem com arquitetura Scale-to-Zero automatizada.
 
-API Rails pronta para produção para conversão de moedas em tempo real com autenticação JWT, cobertura completa de testes e deployment automatizado via CI/CD.
-
-🌐 **Live:** https://currency-converter-ruby.fly.dev | 📚 **Docs API:** https://currency-converter-ruby.fly.dev/api-docs | ✅ **190 testes passando** (79% de cobertura)
+🌐 **Aplicação Live:** https://currency-converter-ruby.fly.dev | 📚 **Docs Interativas (Swagger):** https://currency-converter-ruby.fly.dev/api-docs | ✅ **190 testes passando** (79% de cobertura)
 
 ---
 
-## ✅ Requisitos da Avaliação Atendidos
+## 🌟 Destaques Técnicos & Padrões de Engenharia
 
-| Requisito | Implementação | Evidência |
-|-----------|---------------|-----------|
-| **Rails 7.1+** | ✅ Rails 7.1.5 | [Gemfile](backend/Gemfile) |
-| **PostgreSQL** | ✅ BD em Produção | [database.yml](backend/config/database.yml) |
-| **Redis** | ✅ Cache & Sidekiq pronto | [redis.rb](backend/config/initializers/redis.rb) |
-| **Testes RSpec** | ✅ 190 testes, 79% cobertura | `bundle exec rspec` |
-| **CI/CD** | ✅ GitHub Actions | [.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml) |
-| **Git & Ágil** | ✅ PRs, commits convencionais | [Histórico de commits](https://github.com/fassousa/currency-converter-ruby/commits/main) |
-
-**Bônus:** Docker ✅ | Scans de Segurança (Brakeman) ✅ | Documentação API (Swagger) ✅ | Deploy em Produção ✅ | HTTPS/SSL ✅
+| Dimensão | Arquitetura & Implementação | Evidência / Código |
+| :--- | :--- | :--- |
+| **Arquitetura Rails 7.1 Limpa** | Modo API-only enxuto, Bootsnap, Puma e Service Objects para isolamento estrito das regras de negócio | [Gemfile](backend/Gemfile) • [Services](backend/app/services/) |
+| **Banco de Dados Relacional** | PostgreSQL gerenciado (Supabase) via Transaction Pooler (Supavisor), SSL e migrações no deploy | [database.yml](backend/config/database.yml) • [Schema](backend/db/schema.rb) |
+| **Estratégia de Cache Resiliente** | Cache de taxas de câmbio (TTL de 24h) com fallback gracioso de Redis para memory store em caso de ausência | [ExchangeRateProvider](backend/app/services/exchange_rate_provider.rb) • [redis.rb](backend/config/initializers/redis.rb) |
+| **Test-Driven Development (TDD)** | 190+ specs (Request, Service, Model, Serializer) com 79% de cobertura de código via RSpec & FactoryBot | `bundle exec rspec` • [spec/](backend/spec/) |
+| **Cloud Native & DevOps** | Container Docker multi-stage implantado no **Fly.io** com orquestração **Scale-to-Zero** (custo zero ocioso) | [Dockerfile](backend/Dockerfile) • [fly.toml](backend/fly.toml) |
+| **Segurança em Camadas** | Autenticação stateless JWT (Devise), Rate Limiting (Rack::Attack), Brakeman e Bundler Audit automatizados | [rack_attack.rb](backend/config/initializers/rack_attack.rb) • [Devise](backend/config/initializers/devise.rb) |
+| **Observabilidade & Confiabilidade** | Logs JSON estruturados com Lograge, sondas duplas de health check (`/up` e `/api/v1/health`), RuboCop rigoroso | [HealthController](backend/app/controllers/api/v1/health_controller.rb) • [.rubocop.yml](backend/.rubocop.yml) |
+| **Documentação Interativa** | Especificação OpenAPI 3.0 com Swagger UI ao vivo para testes diretos pelo navegador | [Swagger UI](https://currency-converter-ruby.fly.dev/api-docs) • [swagger.yaml](backend/swagger/v1/swagger.yaml) |
 
 ---
 
@@ -118,20 +118,20 @@ open coverage/index.html       # Ver relatório de cobertura de testes
 
 ---
 
-## 🌟 Por Que Esta Implementação?
+## 🏛️ Filosofia de Engenharia & Boas Práticas
 
-**Para a "Engenharia de Software Consciente" da Jaya Tech:**
+Este microsserviço reflete princípios de Engenharia de Software Consciente aplicados em nível sênior:
 
-1. **Decisões Baseadas em Dados:** Cobertura abrangente de testes e monitoramento fornecem confiança
-2. **Relacionamentos Saudáveis:** Arquitetura limpa facilita a colaboração em equipe
-3. **Compreensão do Impacto:** Documentação explica o *porquê*, não apenas o *o quê*
-4. **Autoconhecimento:** Cada commit segue convenções, testes validam premissas
+1. **Decisões Orientadas a Dados:** Cobertura de testes de 79%, logs estruturados de performance e monitoramento de saúde garantem confiabilidade mensurável.
+2. **Relações Claras entre Módulos:** Fronteiras bem delimitadas entre controllers, services, serializers e gateways externos garantem facilidade de manutenção.
+3. **Compreensão de Impacto e Intenção:** Documentação arquitetural profunda e histórico de commits limpo explicam o *porquê* das escolhas, não apenas o *o quê*.
+4. **Qualidade Contínua:** Pipelines de CI/CD validam linters, scanners de vulnerabilidades e testes automatizados antes de qualquer deploy.
 
-**Funcionalidades Prontas para Produção:**
-- Deploy com CI/CD, não apenas "funciona na minha máquina"
-- Scans de segurança no pipeline, não surpresas pós-deployment
-- Certificado SSL real, não placeholders auto-assinados
-- Logging estruturado para debugging, não declarações `puts`
+**Funcionalidades de Nível de Produção:**
+- Deploy cloud-native com Scale-to-Zero automatizado (otimização de recursos e custo zero ocioso)
+- Scans de segurança automatizados integrados ao CI/CD
+- Tráfego criptografado com terminação SSL/TLS via Fly Proxy
+- Logging estruturado em JSON (Lograge) ideal para agregadores de telemetria modernos
 
 ---
 
