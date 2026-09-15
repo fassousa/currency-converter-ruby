@@ -29,6 +29,6 @@ Rails.application.routes.draw do
              path: 'api/v1/auth',
              path_names: { sign_in: 'sign_in', sign_out: 'sign_out' }
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Redirect root to interactive API documentation
+  root to: redirect('/api-docs')
 end
