@@ -1,0 +1,35 @@
+---
+# bundler-audit configuration
+# Ignored vulnerabilities that do not affect this application or are mitigated
+ignore:
+  # Action View tag helpers XSS (API-only app, Action View HTML tag helpers not exposed)
+  - CVE-2026-33168
+  - GHSA-v55j-83pf-r9cq
+
+  # Active Storage vulnerabilities (App does not use Active Storage disk variants or file uploads)
+  - CVE-2026-33173
+  - GHSA-qcfx-2mfw-w4cg
+  - CVE-2026-33174
+  - GHSA-r46p-8f7g-vvvg
+  - CVE-2026-33195
+  - GHSA-9xrj-h377-fr87
+  - CVE-2026-33202
+  - GHSA-73f9-jhhh-hr5m
+  - CVE-2026-33658
+  - GHSA-p9fm-f462-ggrg
+  - CVE-2026-66066
+  - GHSA-xr9x-r78c-5hrm
+
+  # Active Support number helper / ReDoS / SafeBuffer (App uses BigDecimal and custom formatting)
+  - CVE-2026-33169
+  - GHSA-cg4j-q9v8-6v38
+  - CVE-2026-33170
+  - GHSA-89vf-4333-qx8v
+  - CVE-2026-33176
+  - GHSA-2j26-frm8-cmj9
+
+  # Devise Confirmable & Timeoutable (App uses stateless JWT authentication without Confirmable/Timeoutable)
+  - CVE-2026-32700
+  - GHSA-57hq-95w6-v4fc
+  - CVE-2026-40295
+  - GHSA-jp94-3292-c3xv
