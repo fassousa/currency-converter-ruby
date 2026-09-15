@@ -2,15 +2,15 @@
 
 > 🌍 **Language:** [English](DEPLOYMENT.md) | **Português**
 
-A API Currency Converter está implantada no Digital Ocean com CI/CD automatizado via GitHub Actions.
+A API Currency Converter está implantada no Fly.io com scale-to-zero automatizado e conectada ao Supabase PostgreSQL.
 
 ## Ambiente de Produção
 
-- **URL:** https://currencyconverter.duckdns.org
-- **Docs API:** https://currencyconverter.duckdns.org/api-docs  
-- **Plataforma:** Digital Ocean Droplet (Ubuntu 22.04)
-- **Stack:** Nginx + Puma + PostgreSQL + Redis
-- **SSL:** Let's Encrypt (renovação automática)
+- **URL:** https://currency-converter-ruby.fly.dev
+- **Docs API:** https://currency-converter-ruby.fly.dev/api-docs  
+- **Plataforma:** Fly.io (Região: `gru` - São Paulo)
+- **Stack:** Fly Machines (Scale-to-Zero) + Puma + Supabase PostgreSQL + Redis / Memory Store
+- **SSL:** Fly Proxy TLS (renovação automática)
 
 ## Implantação Automatizada
 
@@ -90,7 +90,7 @@ SECRET_KEY_BASE=your_secret_key_base
 ## Health Check
 
 ```bash
-curl https://currencyconverter.duckdns.org/api/v1/health
+curl -H "Accept: application/json" https://currency-converter-ruby.fly.dev/api/v1/health
 ```
 
 Resposta esperada:

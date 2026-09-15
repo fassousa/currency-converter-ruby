@@ -1,13 +1,13 @@
 # API Examples
 
-Quick reference for common API operations. For interactive documentation, visit the [Swagger UI](https://currencyconverter.duckdns.org/api-docs).
+Quick reference for common API operations. For interactive documentation, visit the [Swagger UI](https://currency-converter-ruby.fly.dev/api-docs).
 
 ## Authentication
 
 ### Register New User
 
 ```bash
-curl -X POST https://currencyconverter.duckdns.org/api/v1/auth \
+curl -X POST https://currency-converter-ruby.fly.dev/api/v1/auth \
   -H "Content-Type: application/json" \
   -d '{
     "user": {
@@ -36,7 +36,7 @@ curl -X POST https://currencyconverter.duckdns.org/api/v1/auth \
 ### Login (Get JWT Token)
 
 ```bash
-curl -i -X POST https://currencyconverter.duckdns.org/api/v1/auth/sign_in \
+curl -i -X POST https://currency-converter-ruby.fly.dev/api/v1/auth/sign_in \
   -H "Content-Type: application/json" \
   -d '{
     "user": {
@@ -72,7 +72,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwic2NwIjoidXNlciIsImF1Z
 ### Convert Currency
 
 ```bash
-curl -X POST https://currencyconverter.duckdns.org/api/v1/transactions \
+curl -X POST https://currency-converter-ruby.fly.dev/api/v1/transactions \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -99,7 +99,7 @@ curl -X POST https://currencyconverter.duckdns.org/api/v1/transactions \
 ### Get Transaction History
 
 ```bash
-curl -X GET https://currencyconverter.duckdns.org/api/v1/transactions \
+curl -X GET https://currency-converter-ruby.fly.dev/api/v1/transactions \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -133,7 +133,7 @@ curl -X GET https://currencyconverter.duckdns.org/api/v1/transactions \
 ### Get Transaction by ID
 
 ```bash
-curl -X GET https://currencyconverter.duckdns.org/api/v1/transactions/1 \
+curl -X GET https://currency-converter-ruby.fly.dev/api/v1/transactions/1 \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json"
 ```
@@ -155,7 +155,7 @@ curl -X GET https://currencyconverter.duckdns.org/api/v1/transactions/1 \
 ## Supported Currencies
 
 ```bash
-curl -X GET https://currencyconverter.duckdns.org/api/v1/transactions/currencies \
+curl -X GET https://currency-converter-ruby.fly.dev/api/v1/transactions/currencies \
   -H "Content-Type: application/json"
 ```
 
@@ -172,7 +172,7 @@ curl -X GET https://currencyconverter.duckdns.org/api/v1/transactions/currencies
 ## Health Check
 
 ```bash
-curl -X GET https://currencyconverter.duckdns.org/api/v1/health \
+curl -X GET https://currency-converter-ruby.fly.dev/api/v1/health \
   -H "Content-Type: application/json"
 ```
 
@@ -228,7 +228,7 @@ curl -X GET https://currencyconverter.duckdns.org/api/v1/health \
 
 ## Local Development
 
-For local testing, replace `https://currencyconverter.duckdns.org` with `http://localhost:3000`:
+For local testing, replace `https://currency-converter-ruby.fly.dev` with `http://localhost:3000`:
 
 ```bash
 curl -X POST http://localhost:3000/api/v1/auth \
@@ -238,4 +238,4 @@ curl -X POST http://localhost:3000/api/v1/auth \
 
 ---
 
-📖 **More documentation:** [README](README.md) | [API Documentation](backend/API_DOCUMENTATION.md) | [Swagger UI](https://currencyconverter.duckdns.org/api-docs)
+📖 **More documentation:** [README](README.md) | [API Documentation](backend/API_DOCUMENTATION.md) | [Swagger UI](https://currency-converter-ruby.fly.dev/api-docs)

@@ -414,7 +414,7 @@ paths:
 servers:
 - url: http://localhost:3000
   description: Development server
-- url: https://currencyconverter.duckdns.org
+- url: https://currency-converter-ruby.fly.dev
   description: Production server
 components:
   securitySchemes:

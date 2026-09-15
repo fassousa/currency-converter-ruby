@@ -6,7 +6,7 @@
 
 API Rails pronta para produção para conversão de moedas em tempo real com autenticação JWT, cobertura completa de testes e deployment automatizado via CI/CD.
 
-🌐 **Live:** https://currencyconverter.duckdns.org | 📚 **Docs API:** https://currencyconverter.duckdns.org/api-docs | ✅ **190 testes passando** (79% de cobertura)
+🌐 **Live:** https://currency-converter-ruby.fly.dev | 📚 **Docs API:** https://currency-converter-ruby.fly.dev/api-docs | ✅ **190 testes passando** (79% de cobertura)
 
 ---
 
@@ -103,17 +103,17 @@ open coverage/index.html       # Ver relatório de cobertura de testes
 - 📖 [Decisões de Arquitetura](ARCHITECTURE_DECISIONS.md) - Escolhas técnicas & justificativas
 - 📖 [Guia de Desenvolvimento](DEVELOPMENT.md) - Setup local & workflows Docker
 - 📖 [Guia de Deployment](DEPLOYMENT.pt-BR.md) ([EN](DEPLOYMENT.md)) - Setup de produção com HTTPS
-- 📖 [Docs API Interativas](https://currencyconverter.duckdns.org/api-docs) - Swagger UI
+- 📖 [Docs API Interativas](https://currency-converter-ruby.fly.dev/api-docs) - Swagger UI
 
 ---
 
 ## 🛠️ Stack Tecnológica
 
-**Backend:** Rails 7.1 | PostgreSQL | Redis  
+**Backend:** Rails 7.1 | PostgreSQL (Supabase) | Redis / Memory Store  
 **Auth:** Devise + JWT (devise-jwt)  
 **Testes:** RSpec | FactoryBot | SimpleCov | Shoulda Matchers  
 **Qualidade:** RuboCop | Brakeman | Bundler Audit  
-**DevOps:** GitHub Actions | Docker | Nginx + Puma  
+**DevOps:** Fly.io (Scale-to-Zero) | Docker | Puma | GitHub Actions  
 **Monitoramento:** Lograge | Rack::Attack | Health Checks  
 
 ---
@@ -135,4 +135,4 @@ open coverage/index.html       # Ver relatório de cobertura de testes
 
 ---
 
-**Desenvolvido com ❤️ usando Ruby on Rails** | [Ver Aplicação Live →](https://currencyconverter.duckdns.org/api-docs)
+**Desenvolvido com ❤️ usando Ruby on Rails** | [Ver Aplicação Live →](https://currency-converter-ruby.fly.dev/api-docs)

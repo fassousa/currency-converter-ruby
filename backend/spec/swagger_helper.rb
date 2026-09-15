@@ -34,7 +34,7 @@ RSpec.configure do |config|
           description: 'Development server',
         },
         {
-          url: 'https://currencyconverter.duckdns.org',
+          url: 'https://currency-converter-ruby.fly.dev',
           description: 'Production server',
         },
       ],
