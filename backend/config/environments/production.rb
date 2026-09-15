@@ -19,8 +19,8 @@ Rails.application.configure do
   # key such as config/credentials/production.key. This key is used to decrypt credentials (and other encrypted files).
   # config.require_master_key = true
 
-  # Disable serving static files from `public/`, relying on NGINX/Apache to do so instead.
-  # config.public_file_server.enabled = false
+  # Enable serving static files from `public/` (e.g. Swagger UI assets, robots.txt)
+  config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present? || true
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
@@ -37,12 +37,18 @@ Rails.application.configure do
   # config.action_cable.url = "wss://example.com/cable"
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
-  # config.assume_ssl = true
+  # Assume all access to the app is happening through a SSL-terminating reverse proxy (Fly Proxy).
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
+
+  # Exclude internal health checks from SSL redirection so Fly.io probes receive 200 OK directly
+  config.ssl_options = {
+    redirect: {
+      exclude: ->(request) { request.path =~ %r{\A/(up|api/v1/health)\z} }
+    }
+  }
 
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)
@@ -57,13 +63,16 @@ Rails.application.configure do
   # want to log everything, set the level to "debug".
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
-  # Use a different cache store in production.
-  # Redis cache store for production
-  config.cache_store = :redis_cache_store, {
-    url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'),
-    namespace: 'currency_converter_cache',
-    expires_in: 24.hours
-  }
+  # Cache store: Use Redis if REDIS_URL is provided, otherwise fallback to memory_store
+  if ENV['REDIS_URL'].present?
+    config.cache_store = :redis_cache_store, {
+      url: ENV['REDIS_URL'],
+      namespace: 'currency_converter_cache',
+      expires_in: 24.hours
+    }
+  else
+    config.cache_store = :memory_store
+  end
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
   # config.active_job.queue_adapter = :resque
